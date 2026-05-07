@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.waybar-clone" path="/org/gnome/shell/extensions/waybar-clone/">
+    <key name="show-logo" type="b">
+      <default>true</default>
+      <summary>Show Logo</summary>
+    </key>
+    <key name="show-workspaces" type="b">
+      <default>true</default>
+      <summary>Show Workspaces</summary>
+    </key>
+    <key name="show-net" type="b">
+      <default>true</default>
+      <summary>Show Internet Speed</summary>
+    </key>
+    <key name="show-cpu" type="b">
+      <default>true</default>
+      <summary>Show CPU Usage</summary>
+    </key>
+    <key name="show-ram" type="b">
+      <default>true</default>
+      <summary>Show RAM Usage</summary>
+    </key>
+    <key name="show-clock" type="b">
+      <default>true</default>
+      <summary>Show Clock</summary>
+    </key>
+    <key name="show-battery" type="b">
+      <default>true</default>
+      <summary>Show Battery</summary>
+    </key>
+    <key name="show-quick-settings" type="b">
+      <default>true</default>
+      <summary>Show Quick Settings</summary>
+    </key>
+    <key name="show-power" type="b">
+      <default>true</default>
+      <summary>Show Power Button</summary>
+    </key>
+    <key name="dynamic-color" type="b">
+      <default>true</default>
+      <summary>Use Dynamic (Material You) Color</summary>
+    </key>
+    <key name="custom-color" type="s">
+      <default>'#1e1e2e'</default>
+      <summary>Custom Island Color</summary>
+    </key>
+  </schema>
+</schemalist>

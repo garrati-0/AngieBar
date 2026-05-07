@@ -1,0 +1,350 @@
+/* =========================================
+   1. TRASPARENZA PANNELLO PRINCIPALE
+   ========================================= */
+#panel.transparent-panel {
+    background-color: transparent !important;
+    height: 40px !important;
+}
+
+#panel.transparent-panel .panel-corner {
+    -panel-corner-radius: 0px !important;
+    -panel-corner-border-width: 0px !important;
+    -panel-corner-border-color: transparent !important;
+}
+
+/* =========================================
+   2. BASE PER TUTTE LE ISOLE (Effetto Premium)
+   ========================================= */
+.custom-island {
+    background-color: rgba(24, 24, 37, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    height: 30px;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.4);
+    margin-top: 5px;
+    margin-bottom: 5px;
+    transition-duration: 250ms;
+}
+
+StButton.custom-island {
+    padding: 2px 14px;
+}
+
+StButton.custom-island:hover {
+    background-color: rgba(49, 50, 68, 1.0);
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* Isola Power */
+.power-island {
+    padding: 0px 12px;
+    margin-left: 6px;
+    margin-right: 12px;
+    border-radius: 15px;
+}
+
+.power-icon {
+    icon-size: 18px;
+    color: #f38ba8;
+    /* Rosso Catppuccin più acceso */
+    transition-duration: 250ms;
+}
+
+.power-island:hover .power-icon {
+    color: #ff9fb4;
+    /* Schiarisce al passaggio del mouse */
+}
+
+/* Isola Logo Framework */
+.logo-island {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    background-color: rgba(24, 24, 37, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-left: 12px;
+    margin-right: 8px;
+    transition-duration: 250ms;
+}
+
+.logo-island:hover {
+    background-color: #f8f9fa;
+    border-color: #cba6f7;
+    /* Tocco di viola sull'hover */
+    box-shadow: 0px 4px 16px rgba(203, 166, 247, 0.3);
+}
+
+.logo-icon {
+    icon-size: 16px;
+    color: #cdd6f4;
+}
+
+/* =========================================
+   3. ISOLA DESTRA E CONTROLLI RAPIDI
+   ========================================= */
+.right-island {
+    padding: 0px 4px;
+    margin-right: 0px;
+}
+
+.right-island-btn {
+    border-radius: 8px;
+    padding: 4px 8px;
+    transition-duration: 200ms;
+}
+
+.right-island-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    /* Hover più visibile */
+}
+
+.qs-box {
+    spacing: 10px;
+}
+
+.bat-box {
+    spacing: 8px;
+}
+
+/* Icone di Sistema */
+.system-icon {
+    icon-size: 16px;
+    color: #bac2de;
+    transition-duration: 250ms;
+}
+
+.system-icon:hover {
+    color: #ffffff;
+}
+
+.icon-disabled {
+    color: #585b70;
+    opacity: 0.5;
+}
+
+.island-separator {
+    color: rgba(171, 178, 191, 0.3);
+    /* Separatore più discreto */
+    font-weight: 300;
+    font-size: 16px;
+    margin: 0 4px;
+}
+
+/* Testi Generici */
+.custom-island StLabel {
+    color: #cdd6f4;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    y_align: center;
+}
+
+/* Batteria */
+.battery-label {
+    color: #cdd6f4;
+}
+
+.battery-icon {
+    icon-size: 18px;
+    color: #a6e3a1;
+    /* Verde Menta */
+}
+
+.charging-icon {
+    icon-size: 14px;
+    color: #f9e2af;
+    margin-right: 0px;
+}
+
+.battery-low {
+    color: #f9e2af !important;
+    /* Giallo pastello */
+}
+
+.battery-critical {
+    color: #f38ba8 !important;
+    /* Rosso pastello */
+}
+
+.battery-charging {
+    color: #a6e3a1 !important;
+    /* Verde Menta */
+    icon-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+/* =========================================
+   4. MODULI STATISTICHE (CPU, RAM, RETE)
+   ========================================= */
+.cpu-island,
+.ram-island {
+    padding: 0px 14px;
+    margin-right: 8px;
+}
+
+.cpu-island StIcon,
+.cpu-island StLabel {
+    color: #f38ba8 !important;
+}
+
+.ram-island StIcon,
+.ram-island StLabel {
+    color: #cba6f7 !important;
+}
+
+.stats-icon {
+    icon-size: 14px;
+    margin-right: 8px;
+}
+
+.stats-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: -0.2px;
+}
+
+.net-island {
+    padding: 0px 4px;
+    margin-left: 8px;
+}
+
+.net-island-layout {
+    padding: 0px 10px;
+    spacing: 10px;
+}
+
+.net-box {
+    spacing: 4px;
+}
+
+.net-icon {
+    icon-size: 14px;
+    color: #89b4fa !important;
+}
+
+.net-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: #cdd6f4 !important;
+}
+
+/* =========================================
+   5. WORKSPACES (Pillole e Indicatori)
+   ========================================= */
+.workspaces-island {
+    padding: 0px 12px;
+    spacing: 8px;
+    border-radius: 15px;
+}
+
+.workspace-dot {
+    transition-duration: 300ms;
+}
+
+/* Pallino Inattivo */
+.workspace-dot.inactive {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #bac2de;
+    opacity: 0.4;
+}
+
+.workspace-dot.inactive:hover {
+    opacity: 0.9;
+    background-color: #cdd6f4;
+    transform: scale(1.1);
+    /* Effetto pop al passaggio */
+}
+
+/* Pillola Attiva */
+.workspace-dot.active {
+    width: 36px;
+    height: 14px;
+    border-radius: 7px;
+    background-color: #cba6f7;
+    box-shadow: 0px 0px 8px rgba(203, 166, 247, 0.4);
+    /* Glow sulla pillola attiva */
+}
+
+.workspace-dot-inner {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: rgba(30, 34, 42, 0.9);
+}
+
+/* =========================================
+   6. DYNAMIC ISLAND MEDIA (Musica)
+   ========================================= */
+.center-island-box {
+    spacing: 12px;
+    padding: 0 4px;
+}
+
+.media-active {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    background-color: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+}
+
+.media-art {
+    icon-size: 22px;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+    background-color: #1a1a1a;
+    margin: 4px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.media-wave {
+    spacing: 3px;
+    height: 22px;
+    width: 24px;
+    y_align: center;
+}
+
+.wave-dot {
+    width: 4px;
+    height: 4px;
+    background-color: #ffffff;
+    border-radius: 2px;
+}
+
+.media-art-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background-color: #1e1e2e;
+    background-position: center;
+    background-size: cover;
+}
+
+/* =========================================
+   7. TOOLTIP SYSTEM (Pills)
+   ========================================= */
+.custom-tooltip {
+    background-color: rgba(24, 24, 37, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.tooltip-text {
+    color: #cdd6f4;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-align: left;
+}

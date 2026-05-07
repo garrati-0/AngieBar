@@ -1,0 +1,16 @@
+{
+    "uuid": "AngieBar@garrati.com",
+    "name": "AngieBar",
+    "description": "Custom GNOME bar — Catppuccin Mocha dark theme. Pixel-perfect replica with floating pill-islands, real-time CPU/RAM/Net/Battery, and dynamic clock.",
+    "shell-version": [
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50"
+    ],
+    "version": 4,
+    "url": "",
+    "settings-schema": "org.gnome.shell.extensions.waybar-clone"
+}
