@@ -1,5 +1,4 @@
-# 🚀 AngieBar - Premium GNOME Shell Extension
-
+# AngieBar 
 ```text
     ___                _      ____             
    /   |  ____  ____ _(_)__  / __ )____ ______ 
