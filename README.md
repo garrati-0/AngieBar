@@ -2,7 +2,7 @@
 
 ![AngieBar Banner](bar.png)
 <p align="center">
-  <video src="asset/Video del 2026-05-10 22-31-07.webm" width="100%" controls></video>
+  <video src="asset/gif.mp4" width="100%" controls></video>
 </p>
 
 **AngieBar** is a custom, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern "islands". It transforms your default GNOME panel into a modular, pill-based interface with pixel-perfect styling and real-time system monitoring.
