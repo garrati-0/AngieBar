@@ -1,10 +1,13 @@
 # 🚀 AngieBar - Premium GNOME Shell Extension
 
-![AngieBar Banner](bar.png)
-<p align="center">
-  <video src="asset/gif.mp4" width="100%" controls></video>
-</p>
+    ___                _      ____             
+   /   |  ____  ____ _(_)__  / __ )____ ______ 
+  / /| | / __ \/ __ `/ / _ \/ __  / __ `/ ___/ 
+ / ___ |/ / / / /_/ / /  __/ /_/ / /_/ / /     
+/_/  |_/_/ /_/\__, /_/\___/_____/\__,_/_/      
+             /____/                            
 
+https://github.com/garrati-0/AngieBar/raw/main/asset/gif.mp4
 **AngieBar** is a custom, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern "islands". It transforms your default GNOME panel into a modular, pill-based interface with pixel-perfect styling and real-time system monitoring.
 
 ## ✨ Features
