@@ -1,6 +1,9 @@
 # 🚀 AngieBar - Premium GNOME Shell Extension
 
 ![AngieBar Banner](bar.png)
+<p align="center">
+  <video src="asset/Video del 2026-05-10 22-31-07.webm" width="100%" controls></video>
+</p>
 
 **AngieBar** is a custom, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern "islands". It transforms your default GNOME panel into a modular, pill-based interface with pixel-perfect styling and real-time system monitoring.
 
@@ -19,6 +22,7 @@
 - **Smart Quick Settings**: Custom access to volume (with scroll-to-change), Wi-Fi, and Bluetooth.
 - **Material You Inspired**: Dynamic color adaptation based on your desktop theme.
 - **Highly Customizable**: Toggle any module via the extension settings.
+- **Rofi Power Menu**: Optional integration for a stylized, full-screen power management menu.
 
 ## 🛠️ Installation
 
@@ -57,6 +61,17 @@ The extension uses `stylesheet.css` for all visual elements. It is optimized for
   - `network-manager` (for Wi-Fi info)
   - `upower` (for battery stats)
   - `wireplumber` (for volume control via `wpctl`)
+  - `rofi` (Optional, for the power menu)
+
+## ⚡ Rofi Power Menu
+
+If you chose to install the Rofi configuration, you can trigger the power menu by clicking the power button on the bar. The script is located at `~/.config/rofi/powermenu.sh` and uses the `power_theme.rasi` theme.
+
+Ensure `rofi` is installed on your system:
+```bash
+sudo apt install rofi  # Debian/Ubuntu
+sudo pacman -S rofi    # Arch Linux
+```
 
 ---
 

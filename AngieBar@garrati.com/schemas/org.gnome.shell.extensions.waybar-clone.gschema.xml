@@ -45,5 +45,17 @@
       <default>'#1e1e2e'</default>
       <summary>Custom Island Color</summary>
     </key>
+    <key name="logo-command" type="s">
+      <default>'ptyxis -- ollama run llama3.2'</default>
+      <summary>Command to run when clicking the logo</summary>
+    </key>
+    <key name="power-command" type="s">
+      <default>'sh -c "~/.config/rofi/powermenu.sh"'</default>
+      <summary>Command to run when clicking the power button</summary>
+    </key>
+    <key name="logo-icon-path" type="s">
+      <default>''</default>
+      <summary>Custom logo icon path</summary>
+    </key>
   </schema>
 </schemalist>

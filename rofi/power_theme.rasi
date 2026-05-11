@@ -1,0 +1,64 @@
+* {
+    /* Colori basati sulla tua immagine */
+    bg-pillola: #1A1B26;    /* Sfondo scuro della pillola */
+    bordo: #292E42;         /* Colore del bordo leggero */
+    icona-spenta: #565F89;  /* Colore grigio/blu spento */
+    icona-accesa: #BB9AF7;  /* Viola chiaro per l'icona selezionata */
+
+    background-color: transparent;
+    text-color: @icona-spenta;
+    margin: 0;
+    padding: 0;
+    spacing: 0;
+}
+
+window {
+    background-color: @bg-pillola;
+    border: 2px;
+    border-color: @bordo;
+    border-radius: 100px;   /* Angoli arrotondati al massimo per l'effetto pillola */
+    width: 600px;           /* Larghezza della pillola */
+    location: center;
+}
+
+mainbox {
+    /* Nascondiamo inputbar mettendo solo listview come figlio */
+    children: [ listview ];
+    padding: 25px 40px;
+}
+
+listview {
+    /* Rimuoviamo layout: horizontal e usiamo la griglia nativa */
+    columns: 5;
+    lines: 1;
+    spacing: 15px;
+    scrollbar: false;
+    /* Assicura che la lista non si espanda oltre il necessario */
+    fixed-height: true;
+    fixed-columns: true;
+}
+element {
+    padding: 15px 0px;      /* Un po' di padding verticale */
+    background-color: transparent;
+    border-radius: 20px;    /* Arrotonda anche la selezione invisibile */
+}
+
+element normal.normal, element alternate.normal {
+    background-color: transparent;
+    text-color: @icona-spenta;
+}
+
+/* Quando selezioni un'icona, il colore cambia ma lo sfondo rimane invisibile */
+element selected.normal {
+    background-color: transparent;
+    text-color: @icona-accesa;
+}
+
+element-text {
+    font: "JetBrainsMono Nerd Font 38";  
+    horizontal-align: 0.5;
+    vertical-align: 0.5;
+    background-color: inherit;
+    text-color: inherit;
+    cursor: pointer;
+}

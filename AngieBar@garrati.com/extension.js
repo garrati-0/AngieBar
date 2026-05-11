@@ -6,6 +6,7 @@ import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import UPowerGlib from 'gi://UPowerGlib';
 import GdkPixbuf from 'gi://GdkPixbuf'; // IMPORTANTE: Manca questo import per l'estrazione dei colori
+import Meta from 'gi://Meta';
 
 export default class TopbarIslandsExtension extends Extension {
     enable() {
@@ -15,6 +16,7 @@ export default class TopbarIslandsExtension extends Extension {
         this._interfaceSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
         this._bgSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.background' });
         this._schemeSignalId = this._interfaceSettings.connect('changed::color-scheme', () => this._updateDynamicColors());
+
 
         // --- 1. NASCONDIAMO GLI ELEMENTI ORIGINALI ---
         Main.panel._leftBox.get_children().forEach(c => c.hide());
@@ -79,10 +81,17 @@ export default class TopbarIslandsExtension extends Extension {
         this._volIcon = new St.Icon({ icon_name: 'audio-volume-high-symbolic', style_class: 'system-icon', reactive: true });
 
         this._wifiIcon.connect('enter-event', async () => {
+            this._isWifiHovered = true;
+            this._showTooltip(this._wifiIcon, 'WiFi: Caricamento...');
             let info = await this._getWifiInfoAsync();
-            this._showTooltip(this._wifiIcon, info);
+            if (this._isWifiHovered) {
+                this._showTooltip(this._wifiIcon, info);
+            }
         });
-        this._wifiIcon.connect('leave-event', () => this._hideTooltip());
+        this._wifiIcon.connect('leave-event', () => {
+            this._isWifiHovered = false;
+            this._hideTooltip();
+        });
 
         this._volIcon.connect('scroll-event', (actor, event) => {
             const direction = event.get_scroll_direction();
@@ -163,7 +172,8 @@ export default class TopbarIslandsExtension extends Extension {
         let powerIcon = new St.Icon({ icon_name: 'system-shutdown-symbolic', style_class: 'power-icon' });
         this._powerIsland.set_child(powerIcon);
         this._powerIsland.connect('clicked', () => {
-            GLib.spawn_command_line_async('gnome-session-quit --power-off');
+            const cmd = this._settings.get_string('power-command');
+            GLib.spawn_command_line_async(cmd);
         });
 
         this._quickSettingsBtn.visible = this._settings.get_boolean('show-quick-settings');
@@ -185,14 +195,22 @@ export default class TopbarIslandsExtension extends Extension {
         });
 
         // Corretto in Gio.Icon.new_for_string
-        let logoIcon = new St.Icon({
-            gicon: Gio.Icon.new_for_string(`${this.path}/Framework Symbol SVG.svg`),
+        this._logoIcon = new St.Icon({
             style_class: 'logo-icon'
         });
-        this._logoIsland.set_child(logoIcon);
+        this._updateLogoIcon();
+        this._logoIsland.set_child(this._logoIcon);
 
-        this._logoIsland.connect('button-press-event', () => {
-            Main.overview.toggle();
+        this._logoIsland.connect('button-press-event', (actor, event) => {
+            let button = event.get_button();
+            if (button === 1) {
+                // Tasto sinistro: comando personalizzato
+                const cmd = this._settings.get_string('logo-command');
+                GLib.spawn_command_line_async(cmd);
+            } else if (button === 3) {
+                // Tasto destro: apre l'overview/multitasking
+                Main.overview.toggle();
+            }
             return Clutter.EVENT_STOP;
         });
 
@@ -278,10 +296,47 @@ export default class TopbarIslandsExtension extends Extension {
         this._wsSignals.push(this._wsManager.connect('workspace-switched', this._updateWorkspaces.bind(this)));
         this._updateWorkspaces();
 
+        // --- 3.P MODULO PRIVACY ---
+        this._privacyIsland = new St.BoxLayout({
+            style_class: 'custom-island privacy-island',
+            y_align: Clutter.ActorAlign.CENTER,
+            reactive: true, track_hover: true, can_focus: true,
+            visible: false
+        });
+
+        this._micBox = new St.BoxLayout({ style_class: 'privacy-box mic-box', visible: false, y_align: Clutter.ActorAlign.CENTER });
+        let micIcon = new St.Icon({ icon_name: 'audio-input-microphone-symbolic', style_class: 'privacy-icon mic-icon' });
+        this._micBox.add_child(micIcon);
+
+        this._camBox = new St.BoxLayout({ style_class: 'privacy-box cam-box', visible: false, y_align: Clutter.ActorAlign.CENTER });
+        let camIcon = new St.Icon({ icon_name: 'camera-web-symbolic', style_class: 'privacy-icon cam-icon' });
+        this._camBox.add_child(camIcon);
+
+        this._privacyIsland.add_child(this._micBox);
+        this._privacyIsland.add_child(this._camBox);
+
+        this._activeMicApps = [];
+        this._activeCamApps = [];
+
+        this._privacyIsland.connect('enter-event', () => {
+            let text = [];
+            if (this._activeMicApps.length > 0) {
+                text.push(`Microfono in uso da:\n- ${this._activeMicApps.join('\n- ')}`);
+            }
+            if (this._activeCamApps.length > 0) {
+                text.push(`Fotocamera in uso da:\n- ${this._activeCamApps.join('\n- ')}`);
+            }
+            if (text.length > 0) {
+                this._showTooltip(this._privacyIsland, text.join('\n\n'));
+            }
+        });
+        this._privacyIsland.connect('leave-event', () => this._hideTooltip());
+
         // ASSEMBLAGGIO PANNELLO
         Main.panel._leftBox.add_child(this._logoIsland);
         Main.panel._leftBox.add_child(this._workspacesIsland);
         Main.panel._leftBox.add_child(this._netIsland);
+        Main.panel._leftBox.add_child(this._privacyIsland);
         Main.panel._leftBox.show();
 
         Main.panel._rightBox.add_child(this._cpuIsland);
@@ -300,6 +355,7 @@ export default class TopbarIslandsExtension extends Extension {
         });
         this._settingsSignals.push(this._settings.connect('changed::dynamic-color', () => this._updateDynamicColors()));
         this._settingsSignals.push(this._settings.connect('changed::custom-color', () => this._updateDynamicColors()));
+        this._settingsSignals.push(this._settings.connect('changed::logo-icon-path', () => this._updateLogoIcon()));
 
         this._updateVisibility();
         this._updateDynamicColors();
@@ -309,6 +365,7 @@ export default class TopbarIslandsExtension extends Extension {
         this._updateNet();
         this._updateCpu();
         this._updateRam();
+        this._updatePrivacyAsync();
 
         this._timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => {
             this._tickCount++;
@@ -318,6 +375,7 @@ export default class TopbarIslandsExtension extends Extension {
                 this._updateNet();
                 this._updateCpu();
                 this._updateRam();
+                this._updatePrivacyAsync();
             }
 
             if (this._tickCount % 5 === 0) {
@@ -335,6 +393,8 @@ export default class TopbarIslandsExtension extends Extension {
             return GLib.SOURCE_CONTINUE;
         });
     }
+
+
 
     _initMedia() {
         this._mediaPlaying = false;
@@ -412,7 +472,10 @@ export default class TopbarIslandsExtension extends Extension {
                     anyPlaying = true;
                     let metadata = proxy.Metadata || (proxy.get_cached_property('Metadata')?.deep_unpack());
                     if (metadata) {
-                        bestArtUrl = metadata['mpris:artUrl'] || metadata['xesam:albumArtURL'] || metadata['mpris:artURL'];
+                        let artVal = metadata['mpris:artUrl'] || metadata['xesam:albumArtURL'] || metadata['mpris:artURL'];
+                        if (artVal) {
+                            bestArtUrl = typeof artVal === 'string' ? artVal : (artVal.unpack ? artVal.unpack() : null);
+                        }
                     }
                     if (bestArtUrl) break;
                 }
@@ -552,6 +615,7 @@ export default class TopbarIslandsExtension extends Extension {
 
         destroyAndRemove(this._workspacesIsland, Main.panel._leftBox);
         destroyAndRemove(this._logoIsland, Main.panel._leftBox);
+        destroyAndRemove(this._privacyIsland, Main.panel._leftBox);
         destroyAndRemove(this._netIsland, Main.panel._leftBox);
         destroyAndRemove(this._centerIsland, Main.panel._centerBox);
         destroyAndRemove(this._cpuIsland, Main.panel._rightBox);
@@ -564,6 +628,7 @@ export default class TopbarIslandsExtension extends Extension {
             this._tooltip.destroy();
             this._tooltip = null;
         }
+
 
         if (this._players) {
             this._players.clear();
@@ -586,6 +651,16 @@ export default class TopbarIslandsExtension extends Extension {
         Main.panel.statusArea.dateMenu.show();
         Main.panel.statusArea.quickSettings.show();
         Main.panel.remove_style_class_name('transparent-panel');
+    }
+
+    _updateLogoIcon() {
+        if (!this._logoIcon) return;
+        const customPath = this._settings.get_string('logo-icon-path');
+        if (customPath && GLib.file_test(customPath, GLib.FileTest.EXISTS)) {
+            this._logoIcon.gicon = Gio.Icon.new_for_string(customPath);
+        } else {
+            this._logoIcon.gicon = Gio.Icon.new_for_string(`${this.path}/Framework Symbol SVG.svg`);
+        }
     }
 
     _execCommandAsync(cmd) {
@@ -761,6 +836,47 @@ export default class TopbarIslandsExtension extends Extension {
         return `${kb.toFixed(1)} KB/s`;
     }
 
+    async _updatePrivacyAsync() {
+        if (this._isCheckingPrivacy) return;
+        this._isCheckingPrivacy = true;
+        try {
+            let out = await this._execCommandAsync('pw-dump');
+            if (out) {
+                let data = JSON.parse(out);
+                let micApps = [];
+                let camApps = [];
+
+                data.forEach(n => {
+                    if (n.info && n.info.props && (n.info.state === 'running' || n.info.props['stream.is-live'])) {
+                        let props = n.info.props;
+                        let mediaClass = props['media.class'];
+                        if (mediaClass === 'Stream/Input/Audio' || mediaClass === 'Stream/Input/Video') {
+                            let appName = props['application.name'] || props['node.name'] || 'Sconosciuto';
+                            if (appName === 'gnome-shell' || appName === 'mutter-devkit' || appName === 'WirePlumber' || appName.includes('xdg-desktop-portal') || appName === 'Mutter' || appName === 'pipewire') return;
+
+                            if (mediaClass === 'Stream/Input/Audio') {
+                                if (!micApps.includes(appName)) micApps.push(appName);
+                            } else {
+                                if (!camApps.includes(appName)) camApps.push(appName);
+                            }
+                        }
+                    }
+                });
+
+                this._activeMicApps = micApps;
+                this._activeCamApps = camApps;
+
+                let micActive = micApps.length > 0;
+                let camActive = camApps.length > 0;
+
+                this._micBox.visible = micActive;
+                this._camBox.visible = camActive;
+                this._privacyIsland.visible = micActive || camActive;
+            }
+        } catch (e) { }
+        this._isCheckingPrivacy = false;
+    }
+
     async _updateSystemIconsAsync() {
         if (this._isCheckingSysIcons) return;
         this._isCheckingSysIcons = true;
@@ -883,7 +999,7 @@ export default class TopbarIslandsExtension extends Extension {
 
         let [x, y] = actor.get_transformed_position();
         let [w, h] = actor.get_transformed_size();
-        
+
         // Posizionamento centrato sotto l'elemento
         let tw = this._tooltip.get_preferred_width(-1)[1];
         this._tooltip.set_position(
@@ -913,7 +1029,7 @@ export default class TopbarIslandsExtension extends Extension {
         }
 
         if (time <= 0) return 'Calcolo tempo residuo...';
-        
+
         let hours = Math.floor(time / 3600);
         let mins = Math.floor((time % 3600) / 60);
         return `${label}${hours}h ${mins}m`;
@@ -924,18 +1040,18 @@ export default class TopbarIslandsExtension extends Extension {
             // Metodo più diretto per l'SSID attivo
             let ssid = await this._execCommandAsync("nmcli -t -f active,ssid device wifi list | grep '^yes' | cut -d: -f2 | head -n 1");
             ssid = ssid.trim();
-            
+
             if (!ssid) {
                 // Fallback: prova a vedere se c'è una connessione attiva generica di tipo wireless
                 ssid = await this._execCommandAsync("nmcli -t -f name,type connection show --active | grep '802-11-wireless' | cut -d: -f1 | head -n 1");
                 ssid = ssid.trim();
             }
-            
+
             if (!ssid) return 'WiFi: Disconnesso';
 
             let signalOut = await this._execCommandAsync("nmcli -t -f active,signal device wifi list | grep '^yes' | cut -d: -f2 | head -n 1");
             let signal = signalOut.trim() || 'N/A';
-            
+
             let ipOut = await this._execCommandAsync("hostname -I | awk '{print $1}'");
             let ipAddr = ipOut.trim() || 'N/A';
 

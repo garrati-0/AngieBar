@@ -1,7 +1,8 @@
 /* =========================================
    1. TRASPARENZA PANNELLO PRINCIPALE
    ========================================= */
-#panel.transparent-panel {
+#panel.transparent-panel,
+#panel.transparent-panel .panel-bg {
     background-color: transparent !important;
     height: 40px !important;
 }
@@ -347,4 +348,110 @@ StButton.custom-island:hover {
     font-weight: 700;
     line-height: 1.5;
     text-align: left;
+}
+
+/* =========================================
+   8. PRIVACY MODULE
+   ========================================= */
+.privacy-island {
+    padding: 0px 8px;
+    spacing: 8px;
+    margin-right: 4px;
+    margin-left: 4px;
+}
+
+.privacy-box {
+    spacing: 4px;
+}
+
+.mic-box .privacy-icon {
+    color: #f38ba8 !important;
+    /* Rosso */
+}
+
+.cam-box .privacy-icon {
+    color: #f9e2af !important;
+    /* Giallo */
+}
+
+.privacy-icon {
+    icon-size: 16px;
+}
+
+/* Media Player Popup */
+.media-popup {
+    margin-top: 5px;
+}
+
+.media-popup-bg {
+    width: 280px;
+    height: 120px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 20px;
+    background-color: #1e1e2e;
+}
+
+.media-popup-content {
+    width: 280px;
+    height: 120px;
+    background-color: rgba(24, 24, 37, 0.7);
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.media-popup-info {
+    spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.media-popup-title {
+    color: #cdd6f4;
+    font-size: 15px;
+    font-weight: bold;
+    font-family: 'Inter', sans-serif;
+}
+
+.media-popup-artist {
+    color: #a6adc8;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+}
+
+.media-popup-controls {
+    spacing: 16px;
+}
+
+.media-control-btn {
+    border-radius: 18px;
+    width: 36px;
+    height: 36px;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition-duration: 200ms;
+}
+
+.media-control-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.media-control-btn StIcon {
+    icon-size: 16px;
+    color: #cdd6f4;
+}
+
+.media-control-btn.play-btn {
+    border-radius: 21px;
+    width: 42px;
+    height: 42px;
+    background-color: #cba6f7;
+}
+
+.media-control-btn.play-btn:hover {
+    background-color: #b4befe;
+}
+
+.media-control-btn.play-btn StIcon {
+    color: #11111b;
+    icon-size: 20px;
 }

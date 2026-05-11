@@ -28,6 +28,17 @@ if [ -d "$DEST_DIR/schemas" ]; then
     glib-compile-schemas "$DEST_DIR/schemas/"
 fi
 
+# Optional: Install Rofi Power Menu
+echo ""
+read -p "❓ Do you want to install the Rofi Power Menu configuration? (y/N) " install_rofi
+if [[ "$install_rofi" =~ ^[Yy]$ ]]; then
+    echo "🎨 Installing Rofi Power Menu..."
+    mkdir -p "$HOME/.config/rofi"
+    cp -r rofi/* "$HOME/.config/rofi/"
+    chmod +x "$HOME/.config/rofi/powermenu.sh"
+    echo "✅ Rofi Power Menu installed to ~/.config/rofi/"
+fi
+
 echo ""
 echo "✅ Installation complete!"
 echo "-------------------------------------------------------"
