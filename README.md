@@ -8,10 +8,8 @@
 /_/  |_/_/ /_/\__, /_/\___/_____/\__,_/_/      
              /____/                            
 ```
+![AngieBar Preview](asset/Schermata del 2026-05-11 10-47-30.png)
 
-<p align="center">
-  <video src="https://raw.githubusercontent.com/garrati-0/AngieBar/main/asset/gif.mp4" width="100%" controls></video>
-</p>
 **AngieBar** is a custom, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern "islands". It transforms your default GNOME panel into a modular, pill-based interface with pixel-perfect styling and real-time system monitoring.
 
 ## ✨ Features
