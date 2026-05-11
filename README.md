@@ -8,11 +8,11 @@
 /_/  |_/_/ /_/\__, /_/\___/_____/\__,_/_/      
              /____/                            
 ```
-![AngieBar Preview](asset/Schermata del 2026-05-11 10-47-30.png)
+![AngieBar Preview](asset/bar.png)
 
 **AngieBar** is a custom, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern "islands". It transforms your default GNOME panel into a modular, pill-based interface with pixel-perfect styling and real-time system monitoring.
 
-## ✨ Features
+## Features
 
 - **Modular "Islands"**: Clean, pill-shaped containers for a modern look.
 - **Real-time Monitoring**:
@@ -29,7 +29,7 @@
 - **Highly Customizable**: Toggle any module via the extension settings.
 - **Rofi Power Menu**: Optional integration for a stylized, full-screen power management menu.
 
-## 🛠️ Installation
+## Installation
 
 ### Quick Install (Recommended)
 
@@ -54,11 +54,11 @@ chmod +x install.sh
 4. Restart GNOME Shell (Alt+F2, type `r`, and Enter, or log out and back in on Wayland).
 5. Enable the extension via **GNOME Extensions** or **Extensions Manager**.
 
-## 🎨 Styling
+## Styling
 
 The extension uses `stylesheet.css` for all visual elements. It is optimized for the **Catppuccin Mocha** dark theme by default but adapts dynamically to your system's color scheme if enabled in settings.
 
-## 📋 Requirements
+## Requirements
 
 - **GNOME Shell**: 45 to 50
 - **Dependencies**: 
@@ -68,7 +68,7 @@ The extension uses `stylesheet.css` for all visual elements. It is optimized for
   - `wireplumber` (for volume control via `wpctl`)
   - `rofi` (Optional, for the power menu)
 
-## ⚡ Rofi Power Menu
+## Rofi Power Menu
 
 If you chose to install the Rofi configuration, you can trigger the power menu by clicking the power button on the bar. The script is located at `~/.config/rofi/powermenu.sh` and uses the `power_theme.rasi` theme.
 
