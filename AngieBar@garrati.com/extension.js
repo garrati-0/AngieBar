@@ -82,7 +82,7 @@ export default class TopbarIslandsExtension extends Extension {
 
         this._wifiIcon.connect('enter-event', async () => {
             this._isWifiHovered = true;
-            this._showTooltip(this._wifiIcon, 'WiFi: Caricamento...');
+            this._showTooltip(this._wifiIcon, 'WiFi: Loading...');
             let info = await this._getWifiInfoAsync();
             if (this._isWifiHovered) {
                 this._showTooltip(this._wifiIcon, info);
@@ -221,8 +221,18 @@ export default class TopbarIslandsExtension extends Extension {
         this._cpuIsland.add_child(this._cpuIcon);
         this._cpuIsland.add_child(this._cpuLabel);
         this._cpuIsland.reactive = true;
-        this._cpuIsland.connect('enter-event', () => this._showTooltip(this._cpuIsland, `CPU Usage Details\nLoad: ${this._cpuLabel.text}`));
-        this._cpuIsland.connect('leave-event', () => this._hideTooltip());
+        this._cpuIsland.connect('enter-event', async () => {
+            this._isCpuHovered = true;
+            this._showTooltip(this._cpuIsland, `CPU: Loading...`);
+            let info = await this._getCpuInfoAsync();
+            if (this._isCpuHovered) {
+                this._showTooltip(this._cpuIsland, info);
+            }
+        });
+        this._cpuIsland.connect('leave-event', () => {
+            this._isCpuHovered = false;
+            this._hideTooltip();
+        });
 
         this._ramIsland = new St.BoxLayout({ style_class: 'custom-island ram-island', y_align: Clutter.ActorAlign.CENTER });
         this._ramIcon = new St.Icon({ gicon: Gio.Icon.new_for_string(`${this.path}/ram-custom-symbolic.svg`), style_class: 'stats-icon ram-icon' });
@@ -230,7 +240,10 @@ export default class TopbarIslandsExtension extends Extension {
         this._ramIsland.add_child(this._ramIcon);
         this._ramIsland.add_child(this._ramLabel);
         this._ramIsland.reactive = true;
-        this._ramIsland.connect('enter-event', () => this._showTooltip(this._ramIsland, `Memory Details\nUsage: ${this._ramLabel.text}`));
+        this._ramIsland.connect('enter-event', () => {
+            let details = this._ramDetailsText || 'Loading...';
+            this._showTooltip(this._ramIsland, `Memory Details\nUsage: ${this._ramLabel.text}\nAmount: ${details}`);
+        });
         this._ramIsland.connect('leave-event', () => this._hideTooltip());
 
         this._prevCpuTotal = 0;
@@ -321,10 +334,10 @@ export default class TopbarIslandsExtension extends Extension {
         this._privacyIsland.connect('enter-event', () => {
             let text = [];
             if (this._activeMicApps.length > 0) {
-                text.push(`Microfono in uso da:\n- ${this._activeMicApps.join('\n- ')}`);
+                text.push(`Microphone in use by:\n- ${this._activeMicApps.join('\n- ')}`);
             }
             if (this._activeCamApps.length > 0) {
-                text.push(`Fotocamera in uso da:\n- ${this._activeCamApps.join('\n- ')}`);
+                text.push(`Camera in use by:\n- ${this._activeCamApps.join('\n- ')}`);
             }
             if (text.length > 0) {
                 this._showTooltip(this._privacyIsland, text.join('\n\n'));
@@ -750,6 +763,45 @@ export default class TopbarIslandsExtension extends Extension {
         }
     }
 
+    async _getCpuInfoAsync() {
+        try {
+            let tempCmd = "sensors 2>/dev/null | grep 'Tctl' | awk '{print $2}' | tr -d '+'";
+            let tempStr = await this._execCommandAsync(tempCmd);
+            let temp = tempStr.trim() || 'N/A';
+
+            if (temp === 'N/A' || temp === '') {
+                let tempCmd2 = "cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null";
+                let tempStr2 = await this._execCommandAsync(tempCmd2);
+                if (tempStr2.trim()) {
+                    temp = (parseInt(tempStr2.trim()) / 1000).toFixed(1) + '°C';
+                } else {
+                    temp = 'N/A';
+                }
+            }
+
+            let [res, contents] = GLib.file_get_contents('/proc/cpuinfo');
+            let freqs = [];
+            if (res) {
+                let text = new TextDecoder().decode(contents);
+                let lines = text.split('\n');
+                for (let line of lines) {
+                    if (line.startsWith('cpu MHz')) {
+                        let freq = parseFloat(line.split(':')[1].trim());
+                        freqs.push(freq.toFixed(0) + ' MHz');
+                    }
+                }
+            }
+
+            let tooltipText = `CPU Usage Details\nLoad: ${this._cpuLabel.text}\nTemp: ${temp}\n\nCores:\n`;
+            for (let i = 0; i < freqs.length; i++) {
+                tooltipText += `Core ${i}: ${freqs[i]}\n`;
+            }
+            return tooltipText.trim();
+        } catch (e) {
+            return `CPU Usage Details\nLoad: ${this._cpuLabel.text}`;
+        }
+    }
+
     _updateCpu() {
         try {
             let [res, contents] = GLib.file_get_contents('/proc/stat');
@@ -785,6 +837,11 @@ export default class TopbarIslandsExtension extends Extension {
                     if (line.startsWith('MemAvailable:')) memAvailable = parseInt(line.split(/\s+/)[1]);
                 }
                 if (memTotal > 0) {
+                    let memUsed = memTotal - memAvailable;
+                    let usedGB = (memUsed / 1024 / 1024).toFixed(1);
+                    let availableGB = (memAvailable / 1024 / 1024).toFixed(1);
+                    this._ramDetailsText = `${usedGB}GB / ${availableGB}GB`;
+
                     let usage = 100 * (1 - memAvailable / memTotal);
                     this._ramLabel.set_text(`${usage.toFixed(1)}%`);
                 }
@@ -851,7 +908,7 @@ export default class TopbarIslandsExtension extends Extension {
                         let props = n.info.props;
                         let mediaClass = props['media.class'];
                         if (mediaClass === 'Stream/Input/Audio' || mediaClass === 'Stream/Input/Video') {
-                            let appName = props['application.name'] || props['node.name'] || 'Sconosciuto';
+                            let appName = props['application.name'] || props['node.name'] || 'Unknown';
                             if (appName === 'gnome-shell' || appName === 'mutter-devkit' || appName === 'WirePlumber' || appName.includes('xdg-desktop-portal') || appName === 'Mutter' || appName === 'pipewire') return;
 
                             if (mediaClass === 'Stream/Input/Audio') {
@@ -1013,22 +1070,22 @@ export default class TopbarIslandsExtension extends Extension {
     }
 
     _getBatteryTooltip() {
-        if (!this._displayDevice) return 'Info non disponibili';
+        if (!this._displayDevice) return 'Info not available';
         let state = this._displayDevice.state;
         let time = 0;
         let label = '';
 
         if (state === UPowerGlib.DeviceState.CHARGING) {
             time = this._displayDevice.time_to_full;
-            label = 'Tempo alla carica: ';
+            label = 'Time to full: ';
         } else if (state === UPowerGlib.DeviceState.DISCHARGING) {
             time = this._displayDevice.time_to_empty;
-            label = 'Tempo alla scarica: ';
+            label = 'Time to empty: ';
         } else {
-            return 'Batteria Carica';
+            return 'Battery Charged';
         }
 
-        if (time <= 0) return 'Calcolo tempo residuo...';
+        if (time <= 0) return 'Calculating remaining time...';
 
         let hours = Math.floor(time / 3600);
         let mins = Math.floor((time % 3600) / 60);
@@ -1047,7 +1104,7 @@ export default class TopbarIslandsExtension extends Extension {
                 ssid = ssid.trim();
             }
 
-            if (!ssid) return 'WiFi: Disconnesso';
+            if (!ssid) return 'WiFi: Disconnected';
 
             let signalOut = await this._execCommandAsync("nmcli -t -f active,signal device wifi list | grep '^yes' | cut -d: -f2 | head -n 1");
             let signal = signalOut.trim() || 'N/A';
@@ -1056,7 +1113,7 @@ export default class TopbarIslandsExtension extends Extension {
             let ipAddr = ipOut.trim() || 'N/A';
 
             return `  ${ssid}\n󰠠  ${signal}%\n  ${ipAddr}`;
-        } catch (e) { return 'WiFi: Errore'; }
+        } catch (e) { return 'WiFi: Error'; }
     }
 
     _prefixToNetmask(prefix) {
