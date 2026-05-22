@@ -20,6 +20,7 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
             { id: 'show-logo', title: 'Framework Logo' },
             { id: 'show-workspaces', title: 'Workspaces' },
             { id: 'show-net', title: 'Internet Speed' },
+            { id: 'show-todo', title: 'Todo List' },
             { id: 'show-clock', title: 'Clock (Center)' },
             { id: 'show-cpu', title: 'CPU Monitor' },
             { id: 'show-ram', title: 'RAM Monitor' },

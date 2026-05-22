@@ -13,6 +13,14 @@
     -panel-corner-border-color: transparent !important;
 }
 
+.waybar-left-box {
+    padding-left: 12px !important;
+}
+
+.waybar-right-box {
+    padding-right: 12px !important;
+}
+
 /* =========================================
    2. BASE PER TUTTE LE ISOLE (Effetto Premium)
    ========================================= */
@@ -40,7 +48,7 @@ StButton.custom-island:hover {
 .power-island {
     padding: 0px 12px;
     margin-left: 6px;
-    margin-right: 12px;
+    margin-right: 0px;
     border-radius: 15px;
 }
 
@@ -63,7 +71,7 @@ StButton.custom-island:hover {
     border-radius: 15px;
     background-color: rgba(24, 24, 37, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    margin-left: 12px;
+    margin-left: 0px;
     margin-right: 8px;
     transition-duration: 250ms;
 }
@@ -231,6 +239,25 @@ StButton.custom-island:hover {
     font-size: 13px;
     color: #cdd6f4 !important;
 }
+
+.todo-island {
+    padding: 0px 10px;
+    margin-left: 8px;
+    spacing: 6px;
+}
+
+.todo-icon {
+    icon-size: 14px;
+    color: #f9e2af !important; /* Yellow pastel */
+}
+
+.todo-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: #cdd6f4 !important;
+}
+
 
 /* =========================================
    5. WORKSPACES (Pillole e Indicatori)
@@ -454,4 +481,139 @@ StButton.custom-island:hover {
 .media-control-btn.play-btn StIcon {
     color: #11111b;
     icon-size: 20px;
+}
+
+/* =========================================
+   9. TODO POPUP MENU
+   ========================================= */
+.todo-menu-item-header, .todo-menu-item-input, .todo-menu-item-list {
+    background-color: transparent !important;
+}
+.todo-menu-item-header:hover, .todo-menu-item-input:hover, .todo-menu-item-list:hover,
+.todo-menu-item-header:active, .todo-menu-item-input:active, .todo-menu-item-list:active {
+    background-color: transparent !important;
+}
+
+.todo-popup-box {
+    width: 320px;
+    padding: 12px;
+}
+
+.todo-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.todo-header-title-box {
+    spacing: 8px;
+}
+
+.todo-header-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #cdd6f4;
+}
+
+.todo-header-icon {
+    icon-size: 16px;
+    color: #cdd6f4;
+}
+
+.todo-clear-btn {
+    color: #f38ba8;
+    font-size: 12px;
+    transition-duration: 200ms;
+}
+
+.todo-clear-btn:hover {
+    color: #ff9fb4;
+}
+
+.todo-input-box {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 6px 12px;
+    margin-bottom: 16px;
+}
+
+.todo-entry {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: #bac2de;
+    font-size: 14px;
+    caret-color: #cdd6f4;
+}
+
+.todo-entry:focus {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.todo-add-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    background-color: #89b4fa;
+    margin-left: 8px;
+    transition-duration: 200ms;
+}
+
+.todo-add-btn:hover {
+    background-color: #b4befe;
+}
+
+.todo-add-icon {
+    icon-size: 14px;
+    color: #11111b;
+}
+
+.todo-list-container {
+    spacing: 8px;
+}
+
+.todo-task-box {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 10px 12px;
+    spacing: 12px;
+    transition-duration: 200ms;
+}
+
+.todo-task-box:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.todo-check-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: transparent;
+    transition-duration: 200ms;
+}
+
+.todo-check-btn.checked {
+    background-color: #cba6f7;
+    border-color: #cba6f7;
+}
+
+.todo-check-icon {
+    icon-size: 12px;
+    color: #11111b;
+}
+
+.todo-task-label {
+    font-size: 14px;
+    color: #cdd6f4;
+    transition-duration: 200ms;
+}
+
+.todo-task-label.done {
+    color: #6c7086;
+    text-decoration-line: line-through;
 }

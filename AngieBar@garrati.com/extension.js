@@ -1,6 +1,7 @@
 import Gio from 'gi://Gio';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
@@ -290,6 +291,43 @@ export default class TopbarIslandsExtension extends Extension {
         this._prevNetRx = 0;
         this._prevNetTx = 0;
 
+        // --- 3.I MODULO TODO ---
+        this._todoIsland = new St.Button({
+            style_class: 'custom-island todo-island',
+            y_align: Clutter.ActorAlign.CENTER,
+            reactive: true, track_hover: true, can_focus: true
+        });
+        
+        this._todoBoxLayout = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER });
+        this._todoIsland.set_child(this._todoBoxLayout);
+
+        let todoIcon = new St.Icon({
+            icon_name: 'view-list-symbolic',
+            style_class: 'todo-icon'
+        });
+        
+        this._todoLabel = new St.Label({
+            text: '0/0',
+            style_class: 'todo-label',
+            y_align: Clutter.ActorAlign.CENTER
+        });
+        
+        this._todoBoxLayout.add_child(todoIcon);
+        this._todoBoxLayout.add_child(this._todoLabel);
+
+        this._todoMenuManager = new PopupMenu.PopupMenuManager(this);
+        this._todoMenu = new PopupMenu.PopupMenu(this._todoIsland, 0.5, St.Side.TOP);
+        this._todoMenuManager.addMenu(this._todoMenu);
+        Main.uiGroup.add_child(this._todoMenu.actor);
+        this._todoMenu.actor.hide();
+        
+        this._todoIsland.connect('clicked', () => {
+            this._todoMenu.toggle();
+        });
+
+        this._buildTodoMenu();
+        this._loadTodos();
+
         // --- TOOLTIP SYSTEM ---
         this._tooltip = new St.BoxLayout({
             style_class: 'custom-tooltip',
@@ -346,12 +384,15 @@ export default class TopbarIslandsExtension extends Extension {
         this._privacyIsland.connect('leave-event', () => this._hideTooltip());
 
         // ASSEMBLAGGIO PANNELLO
+        Main.panel._leftBox.add_style_class_name('waybar-left-box');
         Main.panel._leftBox.add_child(this._logoIsland);
         Main.panel._leftBox.add_child(this._workspacesIsland);
         Main.panel._leftBox.add_child(this._netIsland);
+        Main.panel._leftBox.add_child(this._todoIsland);
         Main.panel._leftBox.add_child(this._privacyIsland);
         Main.panel._leftBox.show();
 
+        Main.panel._rightBox.add_style_class_name('waybar-right-box');
         Main.panel._rightBox.add_child(this._cpuIsland);
         Main.panel._rightBox.add_child(this._ramIsland);
         Main.panel._rightBox.add_child(this._rightIsland);
@@ -360,7 +401,7 @@ export default class TopbarIslandsExtension extends Extension {
         // --- 4. GESTIONE VISIBILITÀ E SETTINGS ---
         this._settingsSignals = [];
         const keys = [
-            'show-logo', 'show-workspaces', 'show-net', 'show-clock',
+            'show-logo', 'show-workspaces', 'show-net', 'show-todo', 'show-clock',
             'show-cpu', 'show-ram', 'show-quick-settings', 'show-battery', 'show-power'
         ];
         keys.forEach(key => {
@@ -630,6 +671,12 @@ export default class TopbarIslandsExtension extends Extension {
         destroyAndRemove(this._logoIsland, Main.panel._leftBox);
         destroyAndRemove(this._privacyIsland, Main.panel._leftBox);
         destroyAndRemove(this._netIsland, Main.panel._leftBox);
+        destroyAndRemove(this._todoIsland, Main.panel._leftBox);
+        if (this._todoMenu) {
+            this._todoMenuManager.removeMenu(this._todoMenu);
+            this._todoMenu.destroy();
+            this._todoMenu = null;
+        }
         destroyAndRemove(this._centerIsland, Main.panel._centerBox);
         destroyAndRemove(this._cpuIsland, Main.panel._rightBox);
         destroyAndRemove(this._ramIsland, Main.panel._rightBox);
@@ -661,6 +708,8 @@ export default class TopbarIslandsExtension extends Extension {
 
         Main.panel._leftBox.get_children().forEach(c => c.show());
         Main.panel._leftBox.show();
+        Main.panel._leftBox.remove_style_class_name('waybar-left-box');
+        Main.panel._rightBox.remove_style_class_name('waybar-right-box');
         Main.panel.statusArea.dateMenu.show();
         Main.panel.statusArea.quickSettings.show();
         Main.panel.remove_style_class_name('transparent-panel');
@@ -993,6 +1042,7 @@ export default class TopbarIslandsExtension extends Extension {
         this._logoIsland.visible = this._settings.get_boolean('show-logo');
         this._workspacesIsland.visible = this._settings.get_boolean('show-workspaces');
         this._netIsland.visible = this._settings.get_boolean('show-net');
+        this._todoIsland.visible = this._settings.get_boolean('show-todo');
         this._centerIsland.visible = this._settings.get_boolean('show-clock');
         this._cpuIsland.visible = this._settings.get_boolean('show-cpu');
         this._ramIsland.visible = this._settings.get_boolean('show-ram');
@@ -1059,8 +1109,21 @@ export default class TopbarIslandsExtension extends Extension {
 
         // Posizionamento centrato sotto l'elemento
         let tw = this._tooltip.get_preferred_width(-1)[1];
+        let tooltipX = Math.floor(x + (w / 2) - (tw / 2));
+
+        let monitor = Main.layoutManager.primaryMonitor;
+        if (monitor) {
+            let maxX = monitor.x + monitor.width;
+            if (tooltipX + tw > maxX - 10) {
+                tooltipX = maxX - tw - 10;
+            }
+            if (tooltipX < monitor.x + 10) {
+                tooltipX = monitor.x + 10;
+            }
+        }
+
         this._tooltip.set_position(
-            Math.floor(x + (w / 2) - (tw / 2)),
+            tooltipX,
             Math.floor(y + h + 10)
         );
     }
@@ -1130,7 +1193,7 @@ export default class TopbarIslandsExtension extends Extension {
         const islands = [
             this._centerIsland, this._rightIsland, this._powerIsland,
             this._logoIsland, this._cpuIsland, this._ramIsland,
-            this._netIsland, this._workspacesIsland
+            this._netIsland, this._todoIsland, this._workspacesIsland
         ];
 
         islands.forEach(island => {
@@ -1138,5 +1201,122 @@ export default class TopbarIslandsExtension extends Extension {
                 island.set_style(`background-color: ${bgColor};`);
             }
         });
+    }
+
+    _loadTodos() {
+        this._todos = [];
+        this._todoFilePath = GLib.get_user_config_dir() + '/waybar-clone-todos.json';
+        try {
+            let [res, contents] = GLib.file_get_contents(this._todoFilePath);
+            if (res) {
+                this._todos = JSON.parse(new TextDecoder().decode(contents));
+            }
+        } catch (e) {
+            this._todos = [
+                { text: 'Finire il setup della barra', done: true },
+                { text: 'Bere acqua', done: false },
+                { text: 'Scrivere codice per il widget', done: false }
+            ];
+            this._saveTodos();
+        }
+        this._updateTodoUI();
+    }
+
+    _saveTodos() {
+        try {
+            let data = JSON.stringify(this._todos);
+            GLib.file_set_contents(this._todoFilePath, data);
+        } catch(e) {}
+    }
+
+    _buildTodoMenu() {
+        this._todoMenu.box.add_style_class_name('todo-popup-box');
+        
+        // Header
+        let headerBox = new St.BoxLayout({ style_class: 'todo-header', x_expand: true });
+        let headerTitleBox = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER, style_class: 'todo-header-title-box' });
+        let headerIcon = new St.Icon({ icon_name: 'view-list-symbolic', style_class: 'todo-header-icon' });
+        let headerTitle = new St.Label({ text: 'To-Do List', style_class: 'todo-header-title', y_align: Clutter.ActorAlign.CENTER });
+        headerTitleBox.add_child(headerIcon);
+        headerTitleBox.add_child(headerTitle);
+        
+        let clearBtn = new St.Button({ style_class: 'todo-clear-btn', label: 'Pulisci completati', y_align: Clutter.ActorAlign.CENTER, x_expand: true, x_align: Clutter.ActorAlign.END });
+        clearBtn.connect('clicked', () => {
+            this._todos = this._todos.filter(t => !t.done);
+            this._saveTodos();
+            this._updateTodoUI();
+        });
+        
+        headerBox.add_child(headerTitleBox);
+        headerBox.add_child(clearBtn);
+        
+        let headerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
+        headerItem.add_child(headerBox);
+        headerItem.set_style_class_name('todo-menu-item-header');
+        this._todoMenu.addMenuItem(headerItem);
+        
+        // Input
+        let inputBox = new St.BoxLayout({ style_class: 'todo-input-box', x_expand: true });
+        this._todoEntry = new St.Entry({ hint_text: 'Aggiungi una task...', style_class: 'todo-entry', x_expand: true });
+        let addBtn = new St.Button({ style_class: 'todo-add-btn' });
+        let addIcon = new St.Icon({ icon_name: 'list-add-symbolic', style_class: 'todo-add-icon' });
+        addBtn.set_child(addIcon);
+        
+        inputBox.add_child(this._todoEntry);
+        inputBox.add_child(addBtn);
+        
+        let addAction = () => {
+            let text = this._todoEntry.get_text().trim();
+            if (text) {
+                this._todos.push({ text: text, done: false });
+                this._todoEntry.set_text('');
+                this._saveTodos();
+                this._updateTodoUI();
+            }
+        };
+        addBtn.connect('clicked', addAction);
+        this._todoEntry.clutter_text.connect('activate', addAction);
+        
+        let inputItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
+        inputItem.add_child(inputBox);
+        inputItem.set_style_class_name('todo-menu-item-input');
+        this._todoMenu.addMenuItem(inputItem);
+        
+        // List container
+        this._todoListContainer = new St.BoxLayout({ vertical: true, style_class: 'todo-list-container' });
+        let listItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
+        listItem.add_child(this._todoListContainer);
+        listItem.set_style_class_name('todo-menu-item-list');
+        this._todoMenu.addMenuItem(listItem);
+    }
+
+    _updateTodoUI() {
+        this._todoListContainer.destroy_all_children();
+        let doneCount = 0;
+        
+        this._todos.forEach((task) => {
+            if (task.done) doneCount++;
+            
+            let taskBox = new St.BoxLayout({ style_class: 'todo-task-box', reactive: true, track_hover: true });
+            let checkBtn = new St.Button({ style_class: task.done ? 'todo-check-btn checked' : 'todo-check-btn', y_align: Clutter.ActorAlign.CENTER });
+            let checkIcon = new St.Icon({ icon_name: 'object-select-symbolic', style_class: 'todo-check-icon' });
+            if (task.done) checkBtn.set_child(checkIcon);
+            
+            let taskLabel = new St.Label({ text: task.text, style_class: task.done ? 'todo-task-label done' : 'todo-task-label', y_align: Clutter.ActorAlign.CENTER, x_expand: true });
+            
+            taskBox.add_child(checkBtn);
+            taskBox.add_child(taskLabel);
+            
+            taskBox.connect('button-press-event', () => {
+                task.done = !task.done;
+                this._saveTodos();
+                this._updateTodoUI();
+                return Clutter.EVENT_STOP;
+            });
+            
+            this._todoListContainer.add_child(taskBox);
+        });
+        
+        this._todoLabel.set_text(`${this._todos.length - doneCount}/${this._todos.length}`);
     }
 }

@@ -13,6 +13,10 @@
       <default>true</default>
       <summary>Show Internet Speed</summary>
     </key>
+    <key name="show-todo" type="b">
+      <default>true</default>
+      <summary>Show Todo</summary>
+    </key>
     <key name="show-cpu" type="b">
       <default>true</default>
       <summary>Show CPU Usage</summary>
@@ -50,7 +54,7 @@
       <summary>Command to run when clicking the logo</summary>
     </key>
     <key name="power-command" type="s">
-      <default>'sh -c "~/.config/rofi/powermenu.sh"'</default>
+      <default>'gnome-session-quit --power-off'</default>
       <summary>Command to run when clicking the power button</summary>
     </key>
     <key name="logo-icon-path" type="s">
