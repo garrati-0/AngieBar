@@ -6,17 +6,11 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import UPowerGlib from 'gi://UPowerGlib';
-import GdkPixbuf from 'gi://GdkPixbuf'; // IMPORTANTE: Manca questo import per l'estrazione dei colori
 import Meta from 'gi://Meta';
 
 export default class TopbarIslandsExtension extends Extension {
     enable() {
         this._settings = this.getSettings('org.gnome.shell.extensions.waybar-clone');
-
-        // --- INIZIALIZZAZIONE SETTINGS DI SISTEMA MANCANTI ---
-        this._interfaceSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
-        this._bgSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.background' });
-        this._schemeSignalId = this._interfaceSettings.connect('changed::color-scheme', () => this._updateDynamicColors());
 
 
         // --- 1. NASCONDIAMO GLI ELEMENTI ORIGINALI ---
@@ -195,21 +189,20 @@ export default class TopbarIslandsExtension extends Extension {
             reactive: true, track_hover: true, can_focus: true
         });
 
-        // Corretto in Gio.Icon.new_for_string
+        // Icona SVG (usata solo per file SVG)
         this._logoIcon = new St.Icon({
             style_class: 'logo-icon'
         });
-        this._updateLogoIcon();
         this._logoIsland.set_child(this._logoIcon);
+        this._updateLogoIcon();
 
         this._logoIsland.connect('button-press-event', (actor, event) => {
-            let button = event.get_button();
+            const button = event.get_button();
             if (button === 1) {
-                // Tasto sinistro: comando personalizzato
-                const cmd = this._settings.get_string('logo-command');
-                GLib.spawn_command_line_async(cmd);
+                // Left-click: run custom command
+                GLib.spawn_command_line_async(this._settings.get_string('logo-command'));
             } else if (button === 3) {
-                // Tasto destro: apre l'overview/multitasking
+                // Right-click: toggle overview
                 Main.overview.toggle();
             }
             return Clutter.EVENT_STOP;
@@ -297,7 +290,7 @@ export default class TopbarIslandsExtension extends Extension {
             y_align: Clutter.ActorAlign.CENTER,
             reactive: true, track_hover: true, can_focus: true
         });
-        
+
         this._todoBoxLayout = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER });
         this._todoIsland.set_child(this._todoBoxLayout);
 
@@ -305,13 +298,13 @@ export default class TopbarIslandsExtension extends Extension {
             icon_name: 'view-list-symbolic',
             style_class: 'todo-icon'
         });
-        
+
         this._todoLabel = new St.Label({
             text: '0/0',
             style_class: 'todo-label',
             y_align: Clutter.ActorAlign.CENTER
         });
-        
+
         this._todoBoxLayout.add_child(todoIcon);
         this._todoBoxLayout.add_child(this._todoLabel);
 
@@ -320,7 +313,7 @@ export default class TopbarIslandsExtension extends Extension {
         this._todoMenuManager.addMenu(this._todoMenu);
         Main.uiGroup.add_child(this._todoMenu.actor);
         this._todoMenu.actor.hide();
-        
+
         this._todoIsland.connect('clicked', () => {
             this._todoMenu.toggle();
         });
@@ -398,21 +391,22 @@ export default class TopbarIslandsExtension extends Extension {
         Main.panel._rightBox.add_child(this._rightIsland);
         Main.panel._rightBox.add_child(this._powerIsland);
 
-        // --- 4. GESTIONE VISIBILITÀ E SETTINGS ---
+        // --- 4. VISIBILITY & SETTINGS SIGNALS ---
         this._settingsSignals = [];
-        const keys = [
+        const visibilityKeys = [
             'show-logo', 'show-workspaces', 'show-net', 'show-todo', 'show-clock',
             'show-cpu', 'show-ram', 'show-quick-settings', 'show-battery', 'show-power'
         ];
-        keys.forEach(key => {
+        visibilityKeys.forEach(key => {
             this._settingsSignals.push(this._settings.connect(`changed::${key}`, () => this._updateVisibility()));
         });
-        this._settingsSignals.push(this._settings.connect('changed::dynamic-color', () => this._updateDynamicColors()));
-        this._settingsSignals.push(this._settings.connect('changed::custom-color', () => this._updateDynamicColors()));
+        this._settingsSignals.push(this._settings.connect('changed::custom-color', () => this._applyColor()));
+        this._settingsSignals.push(this._settings.connect('changed::island-opacity', () => this._applyColor()));
         this._settingsSignals.push(this._settings.connect('changed::logo-icon-path', () => this._updateLogoIcon()));
+        this._settingsSignals.push(this._settings.connect('changed::logo-fill-circle', () => this._updateLogoIcon()));
 
         this._updateVisibility();
-        this._updateDynamicColors();
+        this._applyColor();
 
         this._tickCount = 0;
         this._updateSystemIconsAsync();
@@ -618,19 +612,11 @@ export default class TopbarIslandsExtension extends Extension {
     }
 
     disable() {
-        if (this._schemeSignalId && this._interfaceSettings) {
-            this._interfaceSettings.disconnect(this._schemeSignalId);
-            this._schemeSignalId = null;
-        }
-
         if (this._settingsSignals) {
             this._settingsSignals.forEach(id => this._settings.disconnect(id));
             this._settingsSignals = [];
         }
-
         this._settings = null;
-        this._interfaceSettings = null;
-        this._bgSettings = null;
 
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
@@ -716,12 +702,33 @@ export default class TopbarIslandsExtension extends Extension {
     }
 
     _updateLogoIcon() {
-        if (!this._logoIcon) return;
+        if (!this._logoIsland || !this._logoIcon) return;
         const customPath = this._settings.get_string('logo-icon-path');
+        let imgPath;
         if (customPath && GLib.file_test(customPath, GLib.FileTest.EXISTS)) {
-            this._logoIcon.gicon = Gio.Icon.new_for_string(customPath);
+            imgPath = customPath;
         } else {
-            this._logoIcon.gicon = Gio.Icon.new_for_string(`${this.path}/Framework Symbol SVG.svg`);
+            imgPath = `${this.path}/Framework Symbol SVG.svg`;
+        }
+
+        // Ottieni il colore di sfondo corrente (stesso usato da _applyColor)
+        const color   = this._settings.get_string('custom-color');
+        const opacity = this._settings.get_double('island-opacity');
+        const bgColor = this._colorWithOpacity(color, opacity);
+
+        const fillCircle = this._settings.get_boolean('logo-fill-circle');
+
+        if (fillCircle) {
+            // Modalità cover: l'immagine ritaglia e riempie tutto il cerchio
+            this._logoIcon.hide();
+            this._logoIsland.set_style(
+                `background-color: ${bgColor}; background-image: url('${imgPath}'); background-size: cover; background-position: center;`
+            );
+        } else {
+            // Modalità icona: St.Icon centrato, sfondo normale con trasparenza
+            this._logoIcon.gicon = Gio.Icon.new_for_string(imgPath);
+            this._logoIcon.show();
+            this._logoIsland.set_style(`background-color: ${bgColor};`);
         }
     }
 
@@ -743,9 +750,8 @@ export default class TopbarIslandsExtension extends Extension {
         this._workspacesIsland.destroy_all_children();
         let numWorkspaces = this._wsManager.n_workspaces;
         let activeIndex = this._wsManager.get_active_workspace_index();
-        let displayCount = Math.max(4, numWorkspaces);
 
-        for (let i = 0; i < displayCount; i++) {
+        for (let i = 0; i < numWorkspaces; i++) {
             let isActive = (i === activeIndex);
             let dotBtn = new St.Button({
                 style_class: isActive ? 'workspace-dot active' : 'workspace-dot inactive',
@@ -1057,45 +1063,48 @@ export default class TopbarIslandsExtension extends Extension {
             this._rightIsland.visible = (this._quickSettingsBtn.visible || this._batteryBtn.visible);
     }
 
-    _updateDynamicColors() {
-        try {
-            if (!this._settings || !this._interfaceSettings || !this._bgSettings) return;
-            let useDynamic = this._settings.get_boolean('dynamic-color');
+    // ── Color helpers ─────────────────────────────────────────────────────────
 
-            if (!useDynamic) {
-                let customColor = this._settings.get_string('custom-color');
-                this._applyIslandStyle(customColor, '#cba6f7');
-                return;
-            }
+    /**
+     * Convert any CSS color string (hex #rgb/#rrggbb, rgb(), rgba()) to an
+     * rgba() string using the given alpha value.
+     */
+    _colorWithOpacity(color, alpha) {
+        color = (color || '').trim();
 
-            let isDark = this._interfaceSettings.get_string('color-scheme') !== 'prefer-light';
-            let uri = isDark ? this._bgSettings.get_string('picture-uri-dark') : this._bgSettings.get_string('picture-uri');
-            if (!uri || uri === '') uri = this._bgSettings.get_string('picture-uri');
-            if (!uri || uri === '') {
-                this._applyIslandStyle('rgba(24, 24, 37, 0.95)', '#cba6f7');
-                return;
-            }
+        const rgbaMatch = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$/i);
+        if (rgbaMatch)
+            return `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, ${alpha})`;
 
-            let [path] = GLib.filename_from_uri(uri);
-            if (!path || !GLib.file_test(path, GLib.FileTest.EXISTS)) {
-                this._applyIslandStyle('rgba(24, 24, 37, 0.95)', '#cba6f7');
-                return;
-            }
-
-            let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, 1, 1, false);
-            let pixels = pixbuf.get_pixels();
-            let r = pixels[0], g = pixels[1], b = pixels[2];
-
-            let bgAlpha = 0.95;
-            let bgColor = isDark
-                ? `rgba(${Math.floor(r * 0.15 + 15)}, ${Math.floor(g * 0.15 + 15)}, ${Math.floor(b * 0.15 + 15)}, ${bgAlpha})`
-                : `rgba(${Math.floor(r * 0.1 + 240)}, ${Math.floor(g * 0.1 + 240)}, ${Math.floor(b * 0.1 + 240)}, ${bgAlpha})`;
-
-            let accentColor = `rgb(${r}, ${g}, ${b})`;
-            this._applyIslandStyle(bgColor, accentColor);
-        } catch (e) {
-            console.error(`WaybarClone: Error updating colors: ${e}`);
+        let hex = color.replace('#', '');
+        if (hex.length === 3)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        if (hex.length === 6) {
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
+
+        return color; // Fallback
+    }
+
+    /** Apply the current custom-color + island-opacity to every island. */
+    _applyColor() {
+        if (!this._settings) return;
+        const color   = this._settings.get_string('custom-color');
+        const opacity = this._settings.get_double('island-opacity');
+        const final   = this._colorWithOpacity(color, opacity);
+
+        const islands = [
+            this._centerIsland, this._rightIsland, this._powerIsland,
+            this._cpuIsland,   this._ramIsland,
+            this._netIsland,    this._todoIsland,  this._workspacesIsland
+        ];
+        islands.forEach(island => island?.set_style(`background-color: ${final};`));
+
+        // Il logo ha uno stile composto (può avere background-image), lo aggiorna separatamente
+        this._updateLogoIcon();
     }
 
     _showTooltip(actor, text) {
@@ -1189,19 +1198,6 @@ export default class TopbarIslandsExtension extends Extension {
         return mask.join('.');
     }
 
-    _applyIslandStyle(bgColor, accentColor) {
-        const islands = [
-            this._centerIsland, this._rightIsland, this._powerIsland,
-            this._logoIsland, this._cpuIsland, this._ramIsland,
-            this._netIsland, this._todoIsland, this._workspacesIsland
-        ];
-
-        islands.forEach(island => {
-            if (island) {
-                island.set_style(`background-color: ${bgColor};`);
-            }
-        });
-    }
 
     _loadTodos() {
         this._todos = [];
@@ -1213,9 +1209,9 @@ export default class TopbarIslandsExtension extends Extension {
             }
         } catch (e) {
             this._todos = [
-                { text: 'Finire il setup della barra', done: true },
-                { text: 'Bere acqua', done: false },
-                { text: 'Scrivere codice per il widget', done: false }
+                { text: 'Finish bar setup', done: true },
+                { text: 'Drink water', done: false },
+                { text: 'Write code for the widget', done: false }
             ];
             this._saveTodos();
         }
@@ -1226,12 +1222,12 @@ export default class TopbarIslandsExtension extends Extension {
         try {
             let data = JSON.stringify(this._todos);
             GLib.file_set_contents(this._todoFilePath, data);
-        } catch(e) {}
+        } catch (e) { }
     }
 
     _buildTodoMenu() {
         this._todoMenu.box.add_style_class_name('todo-popup-box');
-        
+
         // Header
         let headerBox = new St.BoxLayout({ style_class: 'todo-header', x_expand: true });
         let headerTitleBox = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER, style_class: 'todo-header-title-box' });
@@ -1239,32 +1235,32 @@ export default class TopbarIslandsExtension extends Extension {
         let headerTitle = new St.Label({ text: 'To-Do List', style_class: 'todo-header-title', y_align: Clutter.ActorAlign.CENTER });
         headerTitleBox.add_child(headerIcon);
         headerTitleBox.add_child(headerTitle);
-        
-        let clearBtn = new St.Button({ style_class: 'todo-clear-btn', label: 'Pulisci completati', y_align: Clutter.ActorAlign.CENTER, x_expand: true, x_align: Clutter.ActorAlign.END });
+
+        let clearBtn = new St.Button({ style_class: 'todo-clear-btn', label: 'Clear completed', y_align: Clutter.ActorAlign.CENTER, x_expand: true, x_align: Clutter.ActorAlign.END });
         clearBtn.connect('clicked', () => {
             this._todos = this._todos.filter(t => !t.done);
             this._saveTodos();
             this._updateTodoUI();
         });
-        
+
         headerBox.add_child(headerTitleBox);
         headerBox.add_child(clearBtn);
-        
+
         let headerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
         headerItem.add_child(headerBox);
         headerItem.set_style_class_name('todo-menu-item-header');
         this._todoMenu.addMenuItem(headerItem);
-        
+
         // Input
         let inputBox = new St.BoxLayout({ style_class: 'todo-input-box', x_expand: true });
-        this._todoEntry = new St.Entry({ hint_text: 'Aggiungi una task...', style_class: 'todo-entry', x_expand: true });
+        this._todoEntry = new St.Entry({ hint_text: 'Add a task...', style_class: 'todo-entry', x_expand: true });
         let addBtn = new St.Button({ style_class: 'todo-add-btn' });
         let addIcon = new St.Icon({ icon_name: 'list-add-symbolic', style_class: 'todo-add-icon' });
         addBtn.set_child(addIcon);
-        
+
         inputBox.add_child(this._todoEntry);
         inputBox.add_child(addBtn);
-        
+
         let addAction = () => {
             let text = this._todoEntry.get_text().trim();
             if (text) {
@@ -1276,12 +1272,12 @@ export default class TopbarIslandsExtension extends Extension {
         };
         addBtn.connect('clicked', addAction);
         this._todoEntry.clutter_text.connect('activate', addAction);
-        
+
         let inputItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
         inputItem.add_child(inputBox);
         inputItem.set_style_class_name('todo-menu-item-input');
         this._todoMenu.addMenuItem(inputItem);
-        
+
         // List container
         this._todoListContainer = new St.BoxLayout({ vertical: true, style_class: 'todo-list-container' });
         let listItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
@@ -1293,30 +1289,30 @@ export default class TopbarIslandsExtension extends Extension {
     _updateTodoUI() {
         this._todoListContainer.destroy_all_children();
         let doneCount = 0;
-        
+
         this._todos.forEach((task) => {
             if (task.done) doneCount++;
-            
+
             let taskBox = new St.BoxLayout({ style_class: 'todo-task-box', reactive: true, track_hover: true });
             let checkBtn = new St.Button({ style_class: task.done ? 'todo-check-btn checked' : 'todo-check-btn', y_align: Clutter.ActorAlign.CENTER });
             let checkIcon = new St.Icon({ icon_name: 'object-select-symbolic', style_class: 'todo-check-icon' });
             if (task.done) checkBtn.set_child(checkIcon);
-            
+
             let taskLabel = new St.Label({ text: task.text, style_class: task.done ? 'todo-task-label done' : 'todo-task-label', y_align: Clutter.ActorAlign.CENTER, x_expand: true });
-            
+
             taskBox.add_child(checkBtn);
             taskBox.add_child(taskLabel);
-            
+
             taskBox.connect('button-press-event', () => {
                 task.done = !task.done;
                 this._saveTodos();
                 this._updateTodoUI();
                 return Clutter.EVENT_STOP;
             });
-            
+
             this._todoListContainer.add_child(taskBox);
         });
-        
+
         this._todoLabel.set_text(`${this._todos.length - doneCount}/${this._todos.length}`);
     }
 }

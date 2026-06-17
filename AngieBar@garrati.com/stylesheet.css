@@ -83,8 +83,9 @@ StButton.custom-island:hover {
     box-shadow: 0px 4px 16px rgba(203, 166, 247, 0.3);
 }
 
+/* SVG logo: scalatura vettoriale centrata */
 .logo-icon {
-    icon-size: 16px;
+    icon-size: 18px;
     color: #cdd6f4;
 }
 
@@ -248,7 +249,8 @@ StButton.custom-island:hover {
 
 .todo-icon {
     icon-size: 14px;
-    color: #f9e2af !important; /* Yellow pastel */
+    color: #f9e2af !important;
+    /* Yellow pastel */
 }
 
 .todo-label {
@@ -486,11 +488,18 @@ StButton.custom-island:hover {
 /* =========================================
    9. TODO POPUP MENU
    ========================================= */
-.todo-menu-item-header, .todo-menu-item-input, .todo-menu-item-list {
+.todo-menu-item-header,
+.todo-menu-item-input,
+.todo-menu-item-list {
     background-color: transparent !important;
 }
-.todo-menu-item-header:hover, .todo-menu-item-input:hover, .todo-menu-item-list:hover,
-.todo-menu-item-header:active, .todo-menu-item-input:active, .todo-menu-item-list:active {
+
+.todo-menu-item-header:hover,
+.todo-menu-item-input:hover,
+.todo-menu-item-list:hover,
+.todo-menu-item-header:active,
+.todo-menu-item-input:active,
+.todo-menu-item-list:active {
     background-color: transparent !important;
 }
 

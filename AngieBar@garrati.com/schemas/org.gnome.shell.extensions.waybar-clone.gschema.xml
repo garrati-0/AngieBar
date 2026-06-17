@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.waybar-clone" path="/org/gnome/shell/extensions/waybar-clone/">
+
+    <!-- ── Visibility ── -->
     <key name="show-logo" type="b">
       <default>true</default>
       <summary>Show Logo</summary>
@@ -41,17 +43,21 @@
       <default>true</default>
       <summary>Show Power Button</summary>
     </key>
-    <key name="dynamic-color" type="b">
-      <default>true</default>
-      <summary>Use Dynamic (Material You) Color</summary>
-    </key>
+
+    <!-- ── Appearance ── -->
     <key name="custom-color" type="s">
       <default>'#1e1e2e'</default>
-      <summary>Custom Island Color</summary>
+      <summary>Island background color (hex or rgb/rgba)</summary>
     </key>
+    <key name="island-opacity" type="d">
+      <default>0.95</default>
+      <summary>Island background opacity (0.0 transparent – 1.0 opaque)</summary>
+    </key>
+
+    <!-- ── Commands ── -->
     <key name="logo-command" type="s">
       <default>'ptyxis -- ollama run llama3.2'</default>
-      <summary>Command to run when clicking the logo</summary>
+      <summary>Command to run when left-clicking the logo</summary>
     </key>
     <key name="power-command" type="s">
       <default>'gnome-session-quit --power-off'</default>
@@ -59,7 +65,12 @@
     </key>
     <key name="logo-icon-path" type="s">
       <default>''</default>
-      <summary>Custom logo icon path</summary>
+      <summary>Custom logo icon path (leave empty for default)</summary>
     </key>
+    <key name="logo-fill-circle" type="b">
+      <default>false</default>
+      <summary>Fill the logo circle with the image (cover/crop mode)</summary>
+    </key>
+
   </schema>
 </schemalist>

@@ -6,10 +6,17 @@ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/
 export default class WaybarClonePrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings('org.gnome.shell.extensions.waybar-clone');
-        const page = new Adw.PreferencesPage();
+
+        // ============================================================
+        // PAGE – General Settings
+        // ============================================================
+        const page = new Adw.PreferencesPage({
+            title: 'General',
+            icon_name: 'preferences-system-symbolic'
+        });
         window.add(page);
 
-        // --- Modules Group ---
+        // ── Modules ──────────────────────────────────────────────────
         const moduleGroup = new Adw.PreferencesGroup({
             title: 'Modules',
             description: 'Enable or disable bar components'
@@ -17,130 +24,126 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
         page.add(moduleGroup);
 
         const modules = [
-            { id: 'show-logo', title: 'Framework Logo' },
-            { id: 'show-workspaces', title: 'Workspaces' },
-            { id: 'show-net', title: 'Internet Speed' },
-            { id: 'show-todo', title: 'Todo List' },
-            { id: 'show-clock', title: 'Clock (Center)' },
-            { id: 'show-cpu', title: 'CPU Monitor' },
-            { id: 'show-ram', title: 'RAM Monitor' },
-            { id: 'show-quick-settings', title: 'Quick Settings (Wifi, BT, Vol)' },
-            { id: 'show-battery', title: 'Battery' },
-            { id: 'show-power', title: 'Power Button' },
+            { id: 'show-logo',           title: 'Framework Logo' },
+            { id: 'show-workspaces',     title: 'Workspaces' },
+            { id: 'show-net',            title: 'Internet Speed' },
+            { id: 'show-todo',           title: 'Todo List' },
+            { id: 'show-clock',          title: 'Clock (Center)' },
+            { id: 'show-cpu',            title: 'CPU Monitor' },
+            { id: 'show-ram',            title: 'RAM Monitor' },
+            { id: 'show-quick-settings', title: 'Quick Settings (Wifi, Bluetooth, Volume)' },
+            { id: 'show-battery',        title: 'Battery' },
+            { id: 'show-power',          title: 'Power Button' },
         ];
 
         modules.forEach(m => {
-            const row = new Adw.SwitchRow({
-                title: m.title
-            });
+            const row = new Adw.SwitchRow({ title: m.title });
             moduleGroup.add(row);
             settings.bind(m.id, row, 'active', Gio.SettingsBindFlags.DEFAULT);
         });
 
-        // --- Appearance Group ---
+        // ── Appearance ───────────────────────────────────────────────
         const appearanceGroup = new Adw.PreferencesGroup({
             title: 'Appearance',
-            description: 'Customize island colors'
+            description: 'Island color and transparency'
         });
         page.add(appearanceGroup);
 
-        // Dynamic Color Switch
-        const dynamicRow = new Adw.SwitchRow({
-            title: 'Dynamic Color (Material You)',
-            subtitle: 'Automatically adapt color to the current wallpaper'
-        });
-        appearanceGroup.add(dynamicRow);
-        settings.bind('dynamic-color', dynamicRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-
-        // Custom Color Entry (Only if dynamic is disabled)
-        const colorRow = new Adw.EntryRow({
-            title: 'Custom Color (Hex) - e.g., #1e1e2e'
-        });
+        // Background color
+        const colorRow = new Adw.EntryRow({ title: 'Background Color (hex or rgb/rgba)' });
         appearanceGroup.add(colorRow);
         settings.bind('custom-color', colorRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
-        // Show/hide custom color based on dynamic setting
-        dynamicRow.connect('notify::active', () => {
-            colorRow.sensitive = !dynamicRow.active;
+        // Opacity slider
+        const opacityRow = new Adw.SpinRow({
+            title: 'Island Opacity',
+            subtitle: '0.00 = fully transparent  ·  1.00 = fully opaque',
+            adjustment: new Gtk.Adjustment({
+                lower: 0.0,
+                upper: 1.0,
+                step_increment: 0.05,
+                page_increment: 0.1,
+                value: settings.get_double('island-opacity')
+            }),
+            digits: 2
         });
-        colorRow.sensitive = !dynamicRow.active;
+        appearanceGroup.add(opacityRow);
+        settings.bind('island-opacity', opacityRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
-        // --- Commands and Logo Customization Group ---
-        const customGroup = new Adw.PreferencesGroup({
+        // ── Commands & Logo ──────────────────────────────────────────
+        const commandGroup = new Adw.PreferencesGroup({
             title: 'Commands and Logo',
-            description: 'Customize terminal commands and the logo icon'
+            description: 'Customize commands and the logo icon'
         });
-        page.add(customGroup);
+        page.add(commandGroup);
 
-        // Logo Command
-        const logoCmdRow = new Adw.EntryRow({
-            title: 'Logo Command (Left Click)'
-        });
-        customGroup.add(logoCmdRow);
+        // Logo command (left-click)
+        const logoCmdRow = new Adw.EntryRow({ title: 'Logo Command (Left Click)' });
+        commandGroup.add(logoCmdRow);
         settings.bind('logo-command', logoCmdRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
-        // Power Command
-        const powerCmdRow = new Adw.EntryRow({
-            title: 'Power Command'
-        });
-        customGroup.add(powerCmdRow);
+        // Power command
+        const powerCmdRow = new Adw.EntryRow({ title: 'Power Button Command' });
+        commandGroup.add(powerCmdRow);
         settings.bind('power-command', powerCmdRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
-        // Custom Logo Icon Path
+        // Custom logo icon chooser
         const logoPathRow = new Adw.ActionRow({
             title: 'Custom Logo Icon',
             subtitle: settings.get_string('logo-icon-path') || 'Default'
         });
-        customGroup.add(logoPathRow);
+        commandGroup.add(logoPathRow);
 
         const selectIconBtn = new Gtk.Button({
             icon_name: 'document-open-symbolic',
             valign: Gtk.Align.CENTER,
-            has_frame: false
+            has_frame: false,
+            tooltip_text: 'Choose image…'
         });
-
         selectIconBtn.connect('clicked', () => {
-            const fileChooser = new Gtk.FileDialog({
+            const fc = new Gtk.FileDialog({
                 title: 'Select an image for the logo',
                 filters: new Gio.ListStore({ item_type: Gtk.FileFilter })
             });
-
             const filter = new Gtk.FileFilter();
             filter.set_name('Images');
             filter.add_mime_type('image/png');
             filter.add_mime_type('image/jpeg');
             filter.add_mime_type('image/svg+xml');
-            fileChooser.filters.append(filter);
-
-            fileChooser.open(window, null, (obj, res) => {
+            fc.filters.append(filter);
+            fc.open(window, null, (obj, res) => {
                 try {
-                    const file = fileChooser.open_finish(res);
+                    const file = fc.open_finish(res);
                     if (file) {
                         settings.set_string('logo-icon-path', file.get_path());
                         logoPathRow.subtitle = file.get_path();
                     }
-                } catch (e) {
-                    console.error(e);
-                }
+                } catch (e) { console.error(e); }
             });
         });
 
         const resetIconBtn = new Gtk.Button({
             icon_name: 'edit-clear-symbolic',
             valign: Gtk.Align.CENTER,
-            has_frame: false
+            has_frame: false,
+            tooltip_text: 'Reset to default'
         });
-
         resetIconBtn.connect('clicked', () => {
             settings.set_string('logo-icon-path', '');
             logoPathRow.subtitle = 'Default';
         });
 
-        const btnBox = new Gtk.Box({ spacing: 6 });
-        btnBox.append(selectIconBtn);
-        btnBox.append(resetIconBtn);
-        logoPathRow.add_suffix(btnBox);
+        const iconBtnBox = new Gtk.Box({ spacing: 6 });
+        iconBtnBox.append(selectIconBtn);
+        iconBtnBox.append(resetIconBtn);
+        logoPathRow.add_suffix(iconBtnBox);
+
+        // Logo fill mode (cover/crop)
+        const logoFillRow = new Adw.SwitchRow({
+            title: 'Riempi il cerchio con l\'immagine',
+            subtitle: 'Attivato: l\'immagine viene ritagliata per coprire tutto il cerchio (cover). Disattivato: icona normale centrata.'
+        });
+        commandGroup.add(logoFillRow);
+        settings.bind('logo-fill-circle', logoFillRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     }
 }
-
-
