@@ -53,6 +53,18 @@
       <default>0.95</default>
       <summary>Island background opacity (0.0 transparent – 1.0 opaque)</summary>
     </key>
+    <key name="cpu-color" type="s">
+      <default>'#f38ba8'</default>
+      <summary>CPU module color</summary>
+    </key>
+    <key name="ram-color" type="s">
+      <default>'#cba6f7'</default>
+      <summary>RAM module color</summary>
+    </key>
+    <key name="workspace-active-color" type="s">
+      <default>'#cba6f7'</default>
+      <summary>Active workspace dot color</summary>
+    </key>
 
     <!-- ── Commands ── -->
     <key name="logo-command" type="s">
@@ -70,6 +82,14 @@
     <key name="logo-fill-circle" type="b">
       <default>false</default>
       <summary>Fill the logo circle with the image (cover/crop mode)</summary>
+    </key>
+    <key name="logo-action" type="i">
+      <default>1</default>
+      <summary>Action for logo left click (0 = command, 1 = menu)</summary>
+    </key>
+    <key name="logo-menu-folders" type="s">
+      <default>'/home/garrati/Documenti,/home/garrati/Scaricati,/home/garrati/Scrivania,/home/garrati/Immagini'</default>
+      <summary>Comma separated list of absolute paths for the file menu</summary>
     </key>
 
   </schema>

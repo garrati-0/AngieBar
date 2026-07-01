@@ -6,7 +6,7 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import UPowerGlib from 'gi://UPowerGlib';
-import Meta from 'gi://Meta';
+
 
 export default class TopbarIslandsExtension extends Extension {
     enable() {
@@ -196,11 +196,24 @@ export default class TopbarIslandsExtension extends Extension {
         this._logoIsland.set_child(this._logoIcon);
         this._updateLogoIcon();
 
+        this._logoMenuManager = new PopupMenu.PopupMenuManager(this);
+        this._logoMenu = new PopupMenu.PopupMenu(this._logoIsland, 0.5, St.Side.TOP);
+        this._logoMenuManager.addMenu(this._logoMenu);
+        Main.uiGroup.add_child(this._logoMenu.actor);
+        this._logoMenu.actor.hide();
+        
+        this._buildLogoMenu();
+
         this._logoIsland.connect('button-press-event', (actor, event) => {
             const button = event.get_button();
             if (button === 1) {
-                // Left-click: run custom command
-                GLib.spawn_command_line_async(this._settings.get_string('logo-command'));
+                // Left-click
+                let actionType = this._settings.get_int('logo-action');
+                if (actionType === 1) {
+                    this._logoMenu.toggle();
+                } else {
+                    GLib.spawn_command_line_async(this._settings.get_string('logo-command'));
+                }
             } else if (button === 3) {
                 // Right-click: toggle overview
                 Main.overview.toggle();
@@ -404,9 +417,15 @@ export default class TopbarIslandsExtension extends Extension {
         this._settingsSignals.push(this._settings.connect('changed::island-opacity', () => this._applyColor()));
         this._settingsSignals.push(this._settings.connect('changed::logo-icon-path', () => this._updateLogoIcon()));
         this._settingsSignals.push(this._settings.connect('changed::logo-fill-circle', () => this._updateLogoIcon()));
+        this._settingsSignals.push(this._settings.connect('changed::logo-menu-folders', () => this._buildLogoMenu()));
+        
+        this._settingsSignals.push(this._settings.connect('changed::cpu-color', () => this._applySecondaryColors()));
+        this._settingsSignals.push(this._settings.connect('changed::ram-color', () => this._applySecondaryColors()));
+        this._settingsSignals.push(this._settings.connect('changed::workspace-active-color', () => this._updateWorkspaces()));
 
         this._updateVisibility();
         this._applyColor();
+        this._applySecondaryColors();
 
         this._tickCount = 0;
         this._updateSystemIconsAsync();
@@ -417,17 +436,20 @@ export default class TopbarIslandsExtension extends Extension {
 
         this._timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => {
             this._tickCount++;
-            this._timeLabel.set_text(this._getFormattedTime());
+            
+            if (this._centerIsland.visible) {
+                this._timeLabel.set_text(this._getFormattedTime());
+            }
 
             if (this._tickCount % 3 === 0) {
-                this._updateNet();
-                this._updateCpu();
-                this._updateRam();
-                this._updatePrivacyAsync();
+                if (this._netIsland.visible) this._updateNet();
+                if (this._cpuIsland.visible) this._updateCpu();
+                if (this._ramIsland.visible) this._updateRam();
             }
 
             if (this._tickCount % 5 === 0) {
-                this._updateSystemIconsAsync();
+                if (this._quickSettingsBtn.visible) this._updateSystemIconsAsync();
+                this._updatePrivacyAsync();
             }
 
             if (this._tickCount > 60) this._tickCount = 0;
@@ -435,11 +457,7 @@ export default class TopbarIslandsExtension extends Extension {
         });
 
         this._initMedia();
-
-        this._visualizerTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
-            this._animateWave();
-            return GLib.SOURCE_CONTINUE;
-        });
+        this._visualizerTimerId = null;
     }
 
 
@@ -587,22 +605,38 @@ export default class TopbarIslandsExtension extends Extension {
         } catch (e) { this._mediaArt.hide(); }
     }
 
+    _startVisualizer() {
+        if (!this._visualizerTimerId) {
+            this._visualizerTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                this._animateWave();
+                return GLib.SOURCE_CONTINUE;
+            });
+        }
+    }
+
+    _stopVisualizer() {
+        if (this._visualizerTimerId) {
+            GLib.source_remove(this._visualizerTimerId);
+            this._visualizerTimerId = null;
+            this._mediaWave.get_children().forEach(dot => { dot.translation_y = 0; });
+        }
+    }
+
     _updateMediaUI() {
         if (this._mediaPlaying) {
             this._mediaWave.visible = true;
             this._centerIsland.add_style_class_name('media-active');
+            this._startVisualizer();
         } else {
             this._mediaArt.visible = false;
             this._mediaWave.visible = false;
             this._centerIsland.remove_style_class_name('media-active');
+            this._stopVisualizer();
         }
     }
 
     _animateWave() {
-        if (!this._mediaPlaying) {
-            this._mediaWave.get_children().forEach(dot => { dot.translation_y = 0; });
-            return;
-        }
+        if (!this._mediaPlaying || !this._centerIsland.visible) return;
         this._mediaWave.get_children().forEach((dot, i) => {
             let t = Date.now() / 150;
             let offset = Math.sin(t + i * 1.5) * 5;
@@ -662,6 +696,15 @@ export default class TopbarIslandsExtension extends Extension {
             this._todoMenuManager.removeMenu(this._todoMenu);
             this._todoMenu.destroy();
             this._todoMenu = null;
+        }
+        if (this._logoMenu) {
+            if (this._logoMenuOpenSignal) {
+                this._logoMenu.disconnect(this._logoMenuOpenSignal);
+                this._logoMenuOpenSignal = null;
+            }
+            this._logoMenuManager.removeMenu(this._logoMenu);
+            this._logoMenu.destroy();
+            this._logoMenu = null;
         }
         destroyAndRemove(this._centerIsland, Main.panel._centerBox);
         destroyAndRemove(this._cpuIsland, Main.panel._rightBox);
@@ -761,6 +804,10 @@ export default class TopbarIslandsExtension extends Extension {
             });
 
             if (isActive) {
+                let wsColor = this._settings.get_string('workspace-active-color');
+                let shadowColor = this._colorWithOpacity(wsColor, 0.4);
+                dotBtn.set_style(`background-color: ${wsColor} !important; box-shadow: 0px 0px 8px ${shadowColor};`);
+
                 let innerDot = new St.Widget({ style_class: 'workspace-dot-inner', x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.CENTER });
                 dotBtn.set_child(innerDot);
             }
@@ -1107,6 +1154,18 @@ export default class TopbarIslandsExtension extends Extension {
         this._updateLogoIcon();
     }
 
+    _applySecondaryColors() {
+        if (!this._settings) return;
+        const cpuColor = this._settings.get_string('cpu-color');
+        const ramColor = this._settings.get_string('ram-color');
+
+        if (this._cpuIcon) this._cpuIcon.set_style(`color: ${cpuColor} !important;`);
+        if (this._cpuLabel) this._cpuLabel.set_style(`color: ${cpuColor} !important;`);
+        
+        if (this._ramIcon) this._ramIcon.set_style(`color: ${ramColor} !important;`);
+        if (this._ramLabel) this._ramLabel.set_style(`color: ${ramColor} !important;`);
+    }
+
     _showTooltip(actor, text) {
         if (!text || text === '') return;
         this._tooltipLabel.set_text(text);
@@ -1188,15 +1247,7 @@ export default class TopbarIslandsExtension extends Extension {
         } catch (e) { return 'WiFi: Error'; }
     }
 
-    _prefixToNetmask(prefix) {
-        let mask = [];
-        for (let i = 0; i < 4; i++) {
-            let n = Math.min(prefix, 8);
-            mask.push(256 - Math.pow(2, 8 - n));
-            prefix -= n;
-        }
-        return mask.join('.');
-    }
+
 
 
     _loadTodos() {
@@ -1314,5 +1365,68 @@ export default class TopbarIslandsExtension extends Extension {
         });
 
         this._todoLabel.set_text(`${this._todos.length - doneCount}/${this._todos.length}`);
+    }
+
+    _buildLogoMenu() {
+        if (!this._logoMenu) return;
+        this._logoMenu.removeAll();
+
+        // 1. Impostazioni
+        let settingsItem = new PopupMenu.PopupMenuItem('Impostazioni');
+        settingsItem.connect('activate', () => {
+            GLib.spawn_command_line_async('gnome-control-center');
+        });
+        this._logoMenu.addMenuItem(settingsItem);
+
+        // 2. File (Submenu with folders)
+        let fileSubMenu = new PopupMenu.PopupSubMenuMenuItem('File');
+        let foldersStr = this._settings.get_string('logo-menu-folders');
+        let folders = foldersStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        
+        folders.forEach(folder => {
+            let label = folder.split('/').pop() || folder;
+            let folderItem = new PopupMenu.PopupMenuItem(label);
+            folderItem.connect('activate', () => {
+                let expandedPath = folder.startsWith('~/') ? folder.replace('~', GLib.get_home_dir()) : folder;
+                GLib.spawn_command_line_async(`xdg-open "${expandedPath}"`);
+            });
+            fileSubMenu.menu.addMenuItem(folderItem);
+        });
+        
+        if (folders.length === 0) {
+            let emptyItem = new PopupMenu.PopupMenuItem('Nessuna cartella configurata');
+            emptyItem.reactive = false;
+            fileSubMenu.menu.addMenuItem(emptyItem);
+        }
+        
+        this._logoMenu.addMenuItem(fileSubMenu);
+
+        // 3. Terminale
+        let termItem = new PopupMenu.PopupMenuItem('Terminale');
+        termItem.connect('activate', () => {
+            GLib.spawn_command_line_async('ptyxis');
+        });
+        this._logoMenu.addMenuItem(termItem);
+
+        // Separator
+        this._logoMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+        // 4. Uptime
+        this._uptimeItem = new PopupMenu.PopupMenuItem('Uptime: ...');
+        this._uptimeItem.reactive = false;
+        this._logoMenu.addMenuItem(this._uptimeItem);
+
+        if (!this._logoMenuOpenSignal) {
+            this._logoMenuOpenSignal = this._logoMenu.connect('open-state-changed', (menu, open) => {
+                if (open && this._uptimeItem) {
+                    this._execCommandAsync('uptime -p').then(out => {
+                        let uptime = out.trim().replace('up ', '');
+                        if (uptime) {
+                            this._uptimeItem.label.set_text(`Uptime: ${uptime}`);
+                        }
+                    });
+                }
+            });
+        }
     }
 }
