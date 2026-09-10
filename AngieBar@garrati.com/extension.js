@@ -128,7 +128,7 @@ export default class TopbarIslandsExtension extends Extension {
         });
 
         this._batteryIcon.set_pivot_point(0.5, 0.5);
-        this._batteryIcon.rotation_angle_z = -90;
+        this._batteryIcon.rotation_angle_z = 0;
 
         batBox.add_child(this._chargingIcon);
         batBox.add_child(this._batteryIcon);
@@ -832,30 +832,49 @@ export default class TopbarIslandsExtension extends Extension {
 
         let percent = Math.floor(this._displayDevice.percentage);
         let state = this._displayDevice.state;
-        let isDischarging = (state === UPowerGlib.DeviceState.DISCHARGING);
         let isCharging = (state === UPowerGlib.DeviceState.CHARGING);
 
+        let clampedPercent = Math.max(0, Math.min(100, percent));
+        let fillWidth = ((clampedPercent / 100) * 56).toFixed(2);
+        if (clampedPercent > 0 && parseFloat(fillWidth) < 8.0) {
+            fillWidth = '8.00';
+        }
+
+        let fillColor = '#30D158';
         if (isCharging) {
-            this._batteryIcon.gicon = Gio.Icon.new_for_string(`${this.path}/charging-battery-svgrepo-com.svg`);
-            this._batteryIcon.rotation_angle_z = 0;
-            this._batteryIcon.add_style_class_name('battery-charging');
-            this._chargingIcon.visible = false;
+            fillColor = '#30D158';
+        } else if (clampedPercent <= 20) {
+            fillColor = '#FF3B30';
+        } else if (clampedPercent <= 40) {
+            fillColor = '#FFCC00';
         } else {
-            let iconLevel = Math.floor(percent / 10) * 10;
-            this._batteryIcon.gicon = null;
-            this._batteryIcon.icon_name = `battery-level-${iconLevel}-symbolic`;
-            this._batteryIcon.rotation_angle_z = -90;
-            this._batteryIcon.remove_style_class_name('battery-charging');
-            this._chargingIcon.visible = false;
+            fillColor = '#30D158';
         }
 
-        this._batteryIcon.remove_style_class_name('battery-low');
-        this._batteryIcon.remove_style_class_name('battery-critical');
+        let fillRect = clampedPercent > 0 
+            ? `<rect x="14" y="32" width="${fillWidth}" height="32" rx="8" fill="${fillColor}"/>`
+            : '';
 
-        if (isDischarging) {
-            if (percent <= 20) this._batteryIcon.add_style_class_name('battery-critical');
-            else if (percent <= 40) this._batteryIcon.add_style_class_name('battery-low');
+        let boltPath = isCharging
+            ? `<path d="M 46 20 L 32 48 H 45 L 41 76 L 60 46 H 47 Z" fill="#FFFFFF"/>`
+            : '';
+
+        let svg = `<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="24" width="72" height="48" rx="14" stroke="#a6adc8" stroke-width="6" fill="none"/>
+  <rect x="80" y="37" width="9" height="22" rx="4.5" fill="#a6adc8"/>
+  ${fillRect}
+  ${boltPath}
+</svg>`;
+
+        try {
+            let bytes = new GLib.Bytes(new TextEncoder().encode(svg));
+            this._batteryIcon.gicon = Gio.BytesIcon.new(bytes);
+        } catch (e) {
+            this._batteryIcon.gicon = Gio.Icon.new_for_string(`${this.path}/battery-normal.svg`);
         }
+
+        this._batteryIcon.rotation_angle_z = 0;
+        this._chargingIcon.visible = false;
 
         if (this._showWattage) {
             let watts = this._displayDevice.energy_rate.toFixed(1);

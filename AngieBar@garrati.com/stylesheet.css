@@ -155,33 +155,13 @@ StButton.custom-island:hover {
 }
 
 .battery-icon {
-    icon-size: 18px;
-    color: #a6e3a1;
-    /* Verde Menta */
+    icon-size: 22px;
 }
 
 .charging-icon {
     icon-size: 14px;
     color: #f9e2af;
     margin-right: 0px;
-}
-
-.battery-low {
-    color: #f9e2af !important;
-    /* Giallo pastello */
-}
-
-.battery-critical {
-    color: #f38ba8 !important;
-    /* Rosso pastello */
-}
-
-.battery-charging {
-    color: #a6e3a1 !important;
-    /* Verde Menta */
-    icon-size: 32px;
-    width: 32px;
-    height: 32px;
 }
 
 /* =========================================
