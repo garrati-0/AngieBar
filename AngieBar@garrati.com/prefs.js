@@ -3,34 +3,34 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-export default class WaybarClonePrefs extends ExtensionPreferences {
+export default class AngieBarPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        const settings = this.getSettings('org.gnome.shell.extensions.waybar-clone');
+        const settings = this.getSettings('org.gnome.shell.extensions.AngieBar');
 
         // ============================================================
-        // PAGE 1 – Generale (Moduli)
+        // PAGE 1 – General (Modules)
         // ============================================================
         const pageGen = new Adw.PreferencesPage({
-            title: 'Generale',
+            title: 'General',
             icon_name: 'preferences-system-symbolic'
         });
         window.add(pageGen);
 
         const moduleGroup = new Adw.PreferencesGroup({
-            title: 'Moduli',
-            description: 'Abilita o disabilita i componenti della barra'
+            title: 'Modules',
+            description: 'Enable or disable top bar components'
         });
         pageGen.add(moduleGroup);
 
         const modules = [
-            { id: 'show-logo',           title: 'Framework Logo' },
+            { id: 'show-logo',           title: 'Logo' },
             { id: 'show-workspaces',     title: 'Workspaces' },
             { id: 'show-net',            title: 'Internet Speed' },
             { id: 'show-todo',           title: 'Todo List' },
             { id: 'show-clock',          title: 'Clock (Center)' },
             { id: 'show-cpu',            title: 'CPU Monitor' },
             { id: 'show-ram',            title: 'RAM Monitor' },
-            { id: 'show-quick-settings', title: 'Quick Settings (Wifi, Bluetooth, Volume)' },
+            { id: 'show-quick-settings', title: 'Quick Settings (Wi-Fi, Bluetooth, Volume)' },
             { id: 'show-battery',        title: 'Battery' },
             { id: 'show-power',          title: 'Power Button' },
         ];
@@ -42,22 +42,22 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
         });
 
         // ============================================================
-        // PAGE 2 – Aspetto (Colori e Opacità)
+        // PAGE 2 – Appearance (Colors and Opacity)
         // ============================================================
         const pageAppearance = new Adw.PreferencesPage({
-            title: 'Aspetto',
+            title: 'Appearance',
             icon_name: 'applications-graphics-symbolic'
         });
         window.add(pageAppearance);
 
         const appearanceGroup = new Adw.PreferencesGroup({
-            title: 'Stile Principale',
-            description: 'Colore di base e trasparenza delle isole'
+            title: 'Main Style',
+            description: 'Base color and island opacity'
         });
         pageAppearance.add(appearanceGroup);
 
         // Predefined Colors
-        const predefinedColorsRow = new Adw.ActionRow({ title: 'Colori Predefiniti', subtitle: 'Scegli un tema rapido' });
+        const predefinedColorsRow = new Adw.ActionRow({ title: 'Predefined Colors', subtitle: 'Choose a quick theme' });
         const colorsBox = new Gtk.Box({ spacing: 8, valign: Gtk.Align.CENTER });
         
         const predefined = [
@@ -66,9 +66,9 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
             { name: 'Nord', color: '#2e3440' },
             { name: 'Dracula', color: '#282a36' },
             { name: 'Gruvbox', color: '#282828' },
-            { name: 'Rosso Scuro', color: '#311015' },
-            { name: 'Verde Scuro', color: '#102e1c' },
-            { name: 'Nero Assoluto', color: '#000000' }
+            { name: 'Dark Red', color: '#311015' },
+            { name: 'Dark Green', color: '#102e1c' },
+            { name: 'Absolute Black', color: '#000000' }
         ];
 
         predefined.forEach(p => {
@@ -104,14 +104,14 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
         appearanceGroup.add(predefinedColorsRow);
 
         // Background color
-        const colorRow = new Adw.EntryRow({ title: 'Colore Sfondo Personalizzato (hex o rgb)' });
+        const colorRow = new Adw.EntryRow({ title: 'Custom Background Color (hex or rgb)' });
         appearanceGroup.add(colorRow);
         settings.bind('custom-color', colorRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
         // Opacity slider
         const opacityRow = new Adw.SpinRow({
-            title: 'Opacità Isole',
-            subtitle: '0.00 = invisibile  ·  1.00 = opaco',
+            title: 'Island Opacity',
+            subtitle: '0.00 = transparent  ·  1.00 = opaque',
             adjustment: new Gtk.Adjustment({
                 lower: 0.0,
                 upper: 1.0,
@@ -125,60 +125,60 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
         settings.bind('island-opacity', opacityRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
         const secondaryGroup = new Adw.PreferencesGroup({
-            title: 'Elementi Secondari',
-            description: 'Colori per testi e indicatori specifici'
+            title: 'Secondary Elements',
+            description: 'Colors for specific text and indicators'
         });
         pageAppearance.add(secondaryGroup);
 
-        const cpuColorRow = new Adw.EntryRow({ title: 'Colore Testo/Icona CPU' });
+        const cpuColorRow = new Adw.EntryRow({ title: 'CPU Text/Icon Color' });
         secondaryGroup.add(cpuColorRow);
         settings.bind('cpu-color', cpuColorRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
-        const ramColorRow = new Adw.EntryRow({ title: 'Colore Testo/Icona RAM' });
+        const ramColorRow = new Adw.EntryRow({ title: 'RAM Text/Icon Color' });
         secondaryGroup.add(ramColorRow);
         settings.bind('ram-color', ramColorRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
-        const wsColorRow = new Adw.EntryRow({ title: 'Colore Workspace Attivo' });
+        const wsColorRow = new Adw.EntryRow({ title: 'Active Workspace Color' });
         secondaryGroup.add(wsColorRow);
         settings.bind('workspace-active-color', wsColorRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
         // ============================================================
-        // PAGE 3 – Comandi e Logo
+        // PAGE 3 – Commands & Logo
         // ============================================================
         const pageCommands = new Adw.PreferencesPage({
-            title: 'Comandi e Logo',
+            title: 'Commands & Logo',
             icon_name: 'utilities-terminal-symbolic'
         });
         window.add(pageCommands);
 
         const commandGroup = new Adw.PreferencesGroup({
-            title: 'Impostazioni Logo',
-            description: 'Personalizza icona e azioni del logo Framework'
+            title: 'Logo Settings',
+            description: 'Customize logo icon and actions'
         });
         pageCommands.add(commandGroup);
 
         // Logo action type
         const logoActionRow = new Adw.ComboRow({
-            title: 'Azione clic sinistro sul logo',
-            model: Gtk.StringList.new(['Comando Personalizzato', 'Menu a Tendina'])
+            title: 'Logo Left-Click Action',
+            model: Gtk.StringList.new(['Custom Command', 'Dropdown Menu'])
         });
         commandGroup.add(logoActionRow);
         settings.bind('logo-action', logoActionRow, 'selected', Gio.SettingsBindFlags.DEFAULT);
 
         // Logo command (left-click)
-        const logoCmdRow = new Adw.EntryRow({ title: 'Comando Personalizzato (Clic Sinistro)' });
+        const logoCmdRow = new Adw.EntryRow({ title: 'Custom Command (Left Click)' });
         commandGroup.add(logoCmdRow);
         settings.bind('logo-command', logoCmdRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
         // Logo menu folders
-        const logoFoldersRow = new Adw.EntryRow({ title: 'Cartelle Menu (separate da virgola)' });
+        const logoFoldersRow = new Adw.EntryRow({ title: 'Menu Folders (comma-separated)' });
         commandGroup.add(logoFoldersRow);
         settings.bind('logo-menu-folders', logoFoldersRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
         // Custom logo icon chooser
         const logoPathRow = new Adw.ActionRow({
-            title: 'Icona Logo Personalizzata',
-            subtitle: settings.get_string('logo-icon-path') || 'Predefinito'
+            title: 'Custom Logo Icon',
+            subtitle: settings.get_string('logo-icon-path') || 'Default'
         });
         commandGroup.add(logoPathRow);
 
@@ -186,15 +186,15 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
             icon_name: 'document-open-symbolic',
             valign: Gtk.Align.CENTER,
             has_frame: false,
-            tooltip_text: 'Scegli immagine…'
+            tooltip_text: 'Choose image…'
         });
         selectIconBtn.connect('clicked', () => {
             const fc = new Gtk.FileDialog({
-                title: 'Seleziona un\'immagine per il logo',
+                title: 'Select a logo image',
                 filters: new Gio.ListStore({ item_type: Gtk.FileFilter })
             });
             const filter = new Gtk.FileFilter();
-            filter.set_name('Immagini');
+            filter.set_name('Images');
             filter.add_mime_type('image/png');
             filter.add_mime_type('image/jpeg');
             filter.add_mime_type('image/svg+xml');
@@ -214,11 +214,11 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
             icon_name: 'edit-clear-symbolic',
             valign: Gtk.Align.CENTER,
             has_frame: false,
-            tooltip_text: 'Ripristina predefinito'
+            tooltip_text: 'Reset to default'
         });
         resetIconBtn.connect('clicked', () => {
             settings.set_string('logo-icon-path', '');
-            logoPathRow.subtitle = 'Predefinito';
+            logoPathRow.subtitle = 'Default';
         });
 
         const iconBtnBox = new Gtk.Box({ spacing: 6 });
@@ -228,19 +228,19 @@ export default class WaybarClonePrefs extends ExtensionPreferences {
 
         // Logo fill mode (cover/crop)
         const logoFillRow = new Adw.SwitchRow({
-            title: 'Riempi il cerchio con l\'immagine',
-            subtitle: 'Attivato: l\'immagine copre l\'intero cerchio. Disattivato: icona centrata.'
+            title: 'Fill circle with image',
+            subtitle: 'Enabled: image covers full circle. Disabled: centered icon.'
         });
         commandGroup.add(logoFillRow);
         settings.bind('logo-fill-circle', logoFillRow, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const otherCmdGroup = new Adw.PreferencesGroup({
-            title: 'Altri Comandi'
+            title: 'Other Commands'
         });
         pageCommands.add(otherCmdGroup);
 
         // Power command
-        const powerCmdRow = new Adw.EntryRow({ title: 'Comando Pulsante Power' });
+        const powerCmdRow = new Adw.EntryRow({ title: 'Power Button Command' });
         otherCmdGroup.add(powerCmdRow);
         settings.bind('power-command', powerCmdRow, 'text', Gio.SettingsBindFlags.DEFAULT);
     }

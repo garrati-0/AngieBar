@@ -8,9 +8,9 @@ import GLib from 'gi://GLib';
 import UPowerGlib from 'gi://UPowerGlib';
 
 
-export default class TopbarIslandsExtension extends Extension {
+export default class AngieBarExtension extends Extension {
     enable() {
-        this._settings = this.getSettings('org.gnome.shell.extensions.waybar-clone');
+        this._settings = this.getSettings('org.gnome.shell.extensions.AngieBar');
 
 
         // --- 1. NASCONDIAMO GLI ELEMENTI ORIGINALI ---
@@ -501,7 +501,7 @@ export default class TopbarIslandsExtension extends Extension {
                     }
                 });
             }
-        } catch (e) { console.error(`WaybarClone: Error scanning players: ${e}`); }
+        } catch (e) { console.error(`AngieBar: Error scanning players: ${e}`); }
     }
 
     _addPlayer(name) {
@@ -515,7 +515,7 @@ export default class TopbarIslandsExtension extends Extension {
                     this._players.set(name, proxy);
                     proxy.connect('g-properties-changed', () => this._updateMediaStatus());
                     this._updateMediaStatus();
-                } catch (e) { console.log(`WaybarClone: Failed to init player ${name}: ${e}`); }
+                } catch (e) { console.log(`AngieBar: Failed to init player ${name}: ${e}`); }
             }
         );
     }
@@ -545,7 +545,7 @@ export default class TopbarIslandsExtension extends Extension {
                     }
                     if (bestArtUrl) break;
                 }
-            } catch (e) { console.log(`WaybarClone: Error reading player ${name}: ${e}`); }
+            } catch (e) { console.log(`AngieBar: Error reading player ${name}: ${e}`); }
         }
 
         this._mediaPlaying = anyPlaying;
@@ -577,7 +577,7 @@ export default class TopbarIslandsExtension extends Extension {
             if (url.startsWith('file://')) {
                 localPath = GLib.uri_unescape_string(url.substring(7), null);
             } else if (url.startsWith('http')) {
-                let cacheDir = GLib.get_user_cache_dir() + '/waybar-clone-media';
+                let cacheDir = GLib.get_user_cache_dir() + '/angiebar-media';
                 GLib.mkdir_with_parents(cacheDir, 0o755);
                 let hash = GLib.compute_checksum_for_string(GLib.ChecksumType.MD5, url, -1);
                 let tempFile = Gio.File.new_for_path(`${cacheDir}/${hash}`);
@@ -697,6 +697,7 @@ export default class TopbarIslandsExtension extends Extension {
             this._todoMenu.destroy();
             this._todoMenu = null;
         }
+        this._todoMenuManager = null;
         if (this._logoMenu) {
             if (this._logoMenuOpenSignal) {
                 this._logoMenu.disconnect(this._logoMenuOpenSignal);
@@ -706,6 +707,7 @@ export default class TopbarIslandsExtension extends Extension {
             this._logoMenu.destroy();
             this._logoMenu = null;
         }
+        this._logoMenuManager = null;
         destroyAndRemove(this._centerIsland, Main.panel._centerBox);
         destroyAndRemove(this._cpuIsland, Main.panel._rightBox);
         destroyAndRemove(this._ramIsland, Main.panel._rightBox);
@@ -751,7 +753,7 @@ export default class TopbarIslandsExtension extends Extension {
         if (customPath && GLib.file_test(customPath, GLib.FileTest.EXISTS)) {
             imgPath = customPath;
         } else {
-            imgPath = `${this.path}/Framework Symbol SVG.svg`;
+            imgPath = `${this.path}/AngieBarUser.svg`;
         }
 
         // Ottieni il colore di sfondo corrente (stesso usato da _applyColor)
@@ -1271,9 +1273,11 @@ export default class TopbarIslandsExtension extends Extension {
 
     _loadTodos() {
         this._todos = [];
-        this._todoFilePath = GLib.get_user_config_dir() + '/waybar-clone-todos.json';
+        this._todoFilePath = GLib.get_user_config_dir() + '/angiebar-todos.json';
+        let legacyPath = GLib.get_user_config_dir() + '/waybar-clone-todos.json';
         try {
-            let [res, contents] = GLib.file_get_contents(this._todoFilePath);
+            let targetPath = GLib.file_test(this._todoFilePath, GLib.FileTest.EXISTS) ? this._todoFilePath : legacyPath;
+            let [res, contents] = GLib.file_get_contents(targetPath);
             if (res) {
                 this._todos = JSON.parse(new TextDecoder().decode(contents));
             }
@@ -1407,7 +1411,12 @@ export default class TopbarIslandsExtension extends Extension {
             let folderItem = new PopupMenu.PopupMenuItem(label);
             folderItem.connect('activate', () => {
                 let expandedPath = folder.startsWith('~/') ? folder.replace('~', GLib.get_home_dir()) : folder;
-                GLib.spawn_command_line_async(`xdg-open "${expandedPath}"`);
+                try {
+                    let file = Gio.File.new_for_path(expandedPath);
+                    Gio.AppInfo.launch_default_for_uri_async(file.get_uri(), null, null, null);
+                } catch (e) {
+                    console.error(`AngieBar: Failed to open folder ${expandedPath}: ${e}`);
+                }
             });
             fileSubMenu.menu.addMenuItem(folderItem);
         });

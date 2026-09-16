@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.waybar-clone" path="/org/gnome/shell/extensions/waybar-clone/">
+  <schema id="org.gnome.shell.extensions.AngieBar" path="/org/gnome/shell/extensions/AngieBar/">
 
     <!-- ── Visibility ── -->
     <key name="show-logo" type="b">
@@ -80,7 +80,7 @@
       <summary>Custom logo icon path (leave empty for default)</summary>
     </key>
     <key name="logo-fill-circle" type="b">
-      <default>false</default>
+      <default>true</default>
       <summary>Fill the logo circle with the image (cover/crop mode)</summary>
     </key>
     <key name="logo-action" type="i">
@@ -88,7 +88,7 @@
       <summary>Action for logo left click (0 = command, 1 = menu)</summary>
     </key>
     <key name="logo-menu-folders" type="s">
-      <default>'/home/garrati/Documenti,/home/garrati/Scaricati,/home/garrati/Scrivania,/home/garrati/Immagini'</default>
+      <default>'~/Documenti,~/Scaricati,~/Scrivania,~/Immagini'</default>
       <summary>Comma separated list of absolute paths for the file menu</summary>
     </key>
 

@@ -1,4 +1,5 @@
-# AngieBar 
+# AngieBar
+
 ```text
     ___                _      ____             
    /   |  ____  ____ _(_)__  / __ )____ ______ 
@@ -7,76 +8,104 @@
 /_/  |_/_/ /_/\__, /_/\___/_____/\__,_/_/      
              /____/                            
 ```
+
 ![AngieBar Preview](asset/bar.png)
 
-**AngieBar** is a custom, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern "islands". It transforms your default GNOME panel into a modular, pill-based interface with pixel-perfect styling and real-time system monitoring.
+**AngieBar** is a sleek, modern, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern floating "islands". It transforms your standard GNOME panel into a modular, pill-based interface featuring pixel-perfect styling, rich hover tooltips, and real-time system monitoring.
 
-## Features
+---
 
-- **Modular "Islands"**: Clean, pill-shaped containers for a modern look.
-- **Real-time Monitoring**:
-  - **CPU & RAM**: Dynamic usage statistics directly in the bar.
-  - **Network Traffic**: Live upload and download speeds (expandable/compact view).
-  - **Battery Utility**: Precise percentage and wattage monitoring (click to toggle).
-- **Dynamic Media Controller**: Integrated "Dynamic Island" style media tracker with:
-  - Album artwork extraction (from Firefox, Chrome, Spotify, etc.).
-  - Minimalist "Nothing" style audio visualizer.
-  - Smooth expansion animations.
-- **Enhanced Workspaces**: Interactive dot-based workspace switcher.
-- **Smart Quick Settings**: Custom access to volume (with scroll-to-change), Wi-Fi, and Bluetooth.
-- **Material You Inspired**: Dynamic color adaptation based on your desktop theme.
-- **Highly Customizable**: Toggle any module via the extension settings.
-- **Rofi Power Menu**: Optional integration for a stylized, full-screen power management menu.
+## 🚀 Key Features
 
-## Installation
+### 📌 Interactive Logo Island
+- **Custom Logo Support**: Choose any custom PNG, JPEG, or SVG image (supports full cover fill or centered icon mode).
+- **Left-Click Action**: Configurable to launch a custom command or open an interactive dropdown menu.
+- **Quick-Access Menu**: Provides quick links to GNOME Settings, customizable folder shortcuts (Documents, Downloads, Desktop, Pictures), Terminal, and real-time **System Uptime**.
+- **Right-Click Overview**: Toggle GNOME Overview instantly with a right click.
 
-### Quick Install (Recommended)
+### 📝 Integrated To-Do List Island
+- **Built-in Task Manager**: Track tasks directly from your top bar without extra apps.
+- **Interactive Popup Menu**: Add new tasks, check off completed items, and clear completed entries in one click.
+- **Real-Time Badge**: Displays completed vs. total task count (`X/Y`) on the bar.
+- **Persistent Storage**: Automatically saves your list to `~/.config/angiebar-todos.json`.
 
-Run the included installation script to automatically set up the extension, compile schemas, and move files to the correct directory:
+### 🎵 Dynamic Media & Audio Visualizer Island
+- **MPRIS2 Integration**: Automatically detects media playback from Spotify, Firefox, Chrome, VLC, Celluloid, and more.
+- **Album Art Extraction**: Displays cover art dynamically in the island.
+- **Audio Visualizer**: Minimalist "Nothing" style animated wave effect during active playback.
+- **Quick Calendar**: Click the clock island to open the GNOME Date & Calendar menu.
+
+### 📊 Real-Time System Monitors
+- **CPU Usage & Stats**: Shows live total CPU load percentage. Hovering reveals core frequencies (MHz), temperatures (°C), and usage details.
+- **RAM Monitor**: Displays memory load percentage. Hovering shows exact RAM usage in GB (e.g. `4.2GB / 15.6GB`).
+- **Network Speed Monitor**: Live upload and download speed indicators (`KB/s` / `MB/s`). Click to toggle compact average speed view.
+
+### 🛡️ Privacy & System Indicators
+- **Privacy Indicator Island**: Automatically detects live microphone and camera activity (`PipeWire`), displaying a hover tooltip listing active apps using your hardware.
+- **Quick Settings Module**: WiFi status (hover for SSID, signal %, local IP), Bluetooth state, and Volume indicator with **mouse scroll-to-change volume** support (`wpctl`).
+- **Battery Utility**: Dynamic SVG battery icon rendering charge level and status colors. Click to toggle wattage draw (`W`), hover for time to full/empty.
+- **Power Button**: Dedicated button for one-click power off or custom session actions.
+
+---
+
+## 🎨 Design & Customization
+
+AngieBar features a built-in GTK4 / Libadwaita preferences window (`prefs.js`):
+
+- **Module Toggles**: Easily enable or disable individual islands.
+- **Color Themes & Presets**: Includes quick theme presets (Catppuccin Mocha, Catppuccin Macchiato, Nord, Dracula, Gruvbox, Dark Red, Dark Green, Absolute Black).
+- **Custom Background & Opacity**: Adjust hex/rgba background colors and island transparency (`0.00` to `1.00`).
+- **Accent Customization**: Change text and icon colors independently for CPU, RAM, and active workspace dots.
+
+---
+
+## 🛠️ Installation
+
+### Quick Install (Script)
+
+Clone the repository and run the installation script:
 
 ```bash
+git clone https://github.com/garrati-0/AngieBar.git
+cd AngieBar
 chmod +x install.sh
 ./install.sh
 ```
 
 ### Manual Installation
 
-1. Create the extension directory:
+1. Create the local extension directory:
    ```bash
    mkdir -p ~/.local/share/gnome-shell/extensions/AngieBar@garrati.com
    ```
-2. Copy all files from the `AngieBar@garrati.com` folder to that directory.
-3. Compile the GSettings schemas:
+2. Copy all files into that directory:
+   ```bash
+   cp -r * ~/.local/share/gnome-shell/extensions/AngieBar@garrati.com/
+   ```
+3. Compile the GSettings schema:
    ```bash
    glib-compile-schemas ~/.local/share/gnome-shell/extensions/AngieBar@garrati.com/schemas/
    ```
-4. Restart GNOME Shell (Alt+F2, type `r`, and Enter, or log out and back in on Wayland).
-5. Enable the extension via **GNOME Extensions** or **Extensions Manager**.
-
-## Styling
-
-The extension uses `stylesheet.css` for all visual elements. It is optimized for the **Catppuccin Mocha** dark theme by default but adapts dynamically to your system's color scheme if enabled in settings.
-
-## Requirements
-
-- **GNOME Shell**: 45 to 50
-- **Dependencies**: 
-  - `libadwaita`
-  - `network-manager` (for Wi-Fi info)
-  - `upower` (for battery stats)
-  - `wireplumber` (for volume control via `wpctl`)
-  - `rofi` (Optional, for the power menu)
-
-## Rofi Power Menu
-
-If you chose to install the Rofi configuration, you can trigger the power menu by clicking the power button on the bar. The script is located at `~/.config/rofi/powermenu.sh` and uses the `power_theme.rasi` theme.
-
-Ensure `rofi` is installed on your system:
-```bash
-sudo apt install rofi  # Debian/Ubuntu
-sudo pacman -S rofi    # Arch Linux
-```
+4. Restart GNOME Shell (`Alt` + `F2`, type `r`, press `Enter`, or re-login on Wayland).
+5. Enable the extension using **GNOME Extensions** or **Extensions Manager**.
 
 ---
 
-*Made with ❤️ by garrati*
+## 📋 Requirements
+
+- **GNOME Shell**: 45 to 50
+- **System Dependencies**:
+  - `libadwaita` (for preferences window)
+  - `network-manager` (for Wi-Fi SSID & IP info)
+  - `upower` (for battery stats & wattage)
+  - `wireplumber` / `pipewire` (for volume control via `wpctl` and privacy monitoring)
+
+---
+
+## 📄 License
+
+Distributed under the GPL-3.0 License. See `LICENSE` for more information.
+
+---
+
+*Made with ❤️ by [garrati](https://github.com/garrati-0)*
