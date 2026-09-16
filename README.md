@@ -9,7 +9,7 @@
              /____/                            
 ```
 
-![AngieBar Preview](asset/bar.png)
+![AngieBar Preview](asset/AngieBar.png)
 
 **AngieBar** is a sleek, modern, high-performance status bar for GNOME Shell, inspired by the minimalist aesthetics of Waybar and the interactive utility of modern floating "islands". It transforms your standard GNOME panel into a modular, pill-based interface featuring pixel-perfect styling, rich hover tooltips, and real-time system monitoring.
 
