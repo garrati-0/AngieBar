@@ -10,7 +10,7 @@
         "49",
         "50"
     ],
-    "version": 4,
+    "version": 5,
     "url": "https://github.com/garrati-0/AngieBar",
     "settings-schema": "org.gnome.shell.extensions.AngieBar"
 }

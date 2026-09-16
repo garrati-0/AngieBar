@@ -9,13 +9,62 @@ import UPowerGlib from 'gi://UPowerGlib';
 
 
 export default class AngieBarExtension extends Extension {
+    _connect(object, signal, callback) {
+        if (!object || typeof object.connect !== 'function') return 0;
+        const id = object.connect(signal, callback);
+        if (!this._objectSignals) this._objectSignals = [];
+        this._objectSignals.push({ object, id });
+        return id;
+    }
+
+    _readFileAsync(path) {
+        return new Promise((resolve, reject) => {
+            const file = Gio.File.new_for_path(path);
+            file.load_contents_async(null, (obj, res) => {
+                try {
+                    const [ok, contents] = obj.load_contents_finish(res);
+                    if (ok) {
+                        resolve(new TextDecoder().decode(contents));
+                    } else {
+                        reject(new Error(`Failed to read ${path}`));
+                    }
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        });
+    }
+
+    _writeFileAsync(path, text) {
+        return new Promise((resolve, reject) => {
+            const file = Gio.File.new_for_path(path);
+            const bytes = new GLib.Bytes(text);
+            file.replace_contents_bytes_async(
+                bytes,
+                null,
+                false,
+                Gio.FileCreateFlags.NONE,
+                null,
+                (obj, res) => {
+                    try {
+                        const [ok] = obj.replace_contents_finish(res);
+                        resolve(ok);
+                    } catch (e) {
+                        reject(e);
+                    }
+                }
+            );
+        });
+    }
+
     enable() {
+        this._objectSignals = [];
         this._settings = this.getSettings('org.gnome.shell.extensions.AngieBar');
 
 
         // --- 1. NASCONDIAMO GLI ELEMENTI ORIGINALI ---
         Main.panel._leftBox.get_children().forEach(c => c.hide());
-        Main.panel.statusArea.dateMenu.hide(); // Rimossa la dipendenza da .container
+        Main.panel.statusArea.dateMenu.hide();
         Main.panel.statusArea.quickSettings.hide();
 
         Main.panel.add_style_class_name('transparent-panel');
@@ -50,7 +99,7 @@ export default class AngieBarExtension extends Extension {
         this._centerBoxLayout.add_child(this._timeLabel);
         this._centerBoxLayout.add_child(this._mediaWave);
 
-        this._centerIsland.connect('clicked', () => {
+        this._connect(this._centerIsland, 'clicked', () => {
             let dateMenu = Main.panel.statusArea.dateMenu;
             dateMenu.menu.sourceActor = this._centerIsland;
             dateMenu.menu.toggle();
@@ -75,7 +124,7 @@ export default class AngieBarExtension extends Extension {
         this._btIcon = new St.Icon({ icon_name: 'bluetooth-active-symbolic', style_class: 'system-icon' });
         this._volIcon = new St.Icon({ icon_name: 'audio-volume-high-symbolic', style_class: 'system-icon', reactive: true });
 
-        this._wifiIcon.connect('enter-event', async () => {
+        this._connect(this._wifiIcon, 'enter-event', async () => {
             this._isWifiHovered = true;
             this._showTooltip(this._wifiIcon, 'WiFi: Loading...');
             let info = await this._getWifiInfoAsync();
@@ -83,12 +132,12 @@ export default class AngieBarExtension extends Extension {
                 this._showTooltip(this._wifiIcon, info);
             }
         });
-        this._wifiIcon.connect('leave-event', () => {
+        this._connect(this._wifiIcon, 'leave-event', () => {
             this._isWifiHovered = false;
             this._hideTooltip();
         });
 
-        this._volIcon.connect('scroll-event', (actor, event) => {
+        this._connect(this._volIcon, 'scroll-event', (actor, event) => {
             const direction = event.get_scroll_direction();
             if (direction === Clutter.ScrollDirection.UP) {
                 GLib.spawn_command_line_async('wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+');
@@ -104,7 +153,7 @@ export default class AngieBarExtension extends Extension {
         qsBox.add_child(this._volIcon);
         this._quickSettingsBtn.set_child(qsBox);
 
-        this._quickSettingsBtn.connect('clicked', () => {
+        this._connect(this._quickSettingsBtn, 'clicked', () => {
             let qsMenu = Main.panel.statusArea.quickSettings.menu;
             qsMenu.sourceActor = this._rightIsland;
             qsMenu.toggle();
@@ -139,7 +188,7 @@ export default class AngieBarExtension extends Extension {
         this._displayDevice = this._upowerClient.get_display_device();
         this._showWattage = false;
 
-        this._batteryBtn.connect('clicked', () => {
+        this._connect(this._batteryBtn, 'clicked', () => {
             this._showWattage = !this._showWattage;
             this._updateBattery();
         });
@@ -152,10 +201,10 @@ export default class AngieBarExtension extends Extension {
             this._updateBattery();
         }
 
-        this._batteryBtn.connect('enter-event', () => {
+        this._connect(this._batteryBtn, 'enter-event', () => {
             this._showTooltip(this._batteryBtn, this._getBatteryTooltip());
         });
-        this._batteryBtn.connect('leave-event', () => this._hideTooltip());
+        this._connect(this._batteryBtn, 'leave-event', () => this._hideTooltip());
 
         // --- 3.D MODULO POWER ---
         this._powerIsland = new St.Button({
@@ -166,7 +215,7 @@ export default class AngieBarExtension extends Extension {
 
         let powerIcon = new St.Icon({ icon_name: 'system-shutdown-symbolic', style_class: 'power-icon' });
         this._powerIsland.set_child(powerIcon);
-        this._powerIsland.connect('clicked', () => {
+        this._connect(this._powerIsland, 'clicked', () => {
             const cmd = this._settings.get_string('power-command');
             GLib.spawn_command_line_async(cmd);
         });
@@ -189,7 +238,6 @@ export default class AngieBarExtension extends Extension {
             reactive: true, track_hover: true, can_focus: true
         });
 
-        // Icona SVG (usata solo per file SVG)
         this._logoIcon = new St.Icon({
             style_class: 'logo-icon'
         });
@@ -204,10 +252,9 @@ export default class AngieBarExtension extends Extension {
         
         this._buildLogoMenu();
 
-        this._logoIsland.connect('button-press-event', (actor, event) => {
+        this._connect(this._logoIsland, 'button-press-event', (actor, event) => {
             const button = event.get_button();
             if (button === 1) {
-                // Left-click
                 let actionType = this._settings.get_int('logo-action');
                 if (actionType === 1) {
                     this._logoMenu.toggle();
@@ -215,7 +262,6 @@ export default class AngieBarExtension extends Extension {
                     GLib.spawn_command_line_async(this._settings.get_string('logo-command'));
                 }
             } else if (button === 3) {
-                // Right-click: toggle overview
                 Main.overview.toggle();
             }
             return Clutter.EVENT_STOP;
@@ -228,7 +274,7 @@ export default class AngieBarExtension extends Extension {
         this._cpuIsland.add_child(this._cpuIcon);
         this._cpuIsland.add_child(this._cpuLabel);
         this._cpuIsland.reactive = true;
-        this._cpuIsland.connect('enter-event', async () => {
+        this._connect(this._cpuIsland, 'enter-event', async () => {
             this._isCpuHovered = true;
             this._showTooltip(this._cpuIsland, `CPU: Loading...`);
             let info = await this._getCpuInfoAsync();
@@ -236,7 +282,7 @@ export default class AngieBarExtension extends Extension {
                 this._showTooltip(this._cpuIsland, info);
             }
         });
-        this._cpuIsland.connect('leave-event', () => {
+        this._connect(this._cpuIsland, 'leave-event', () => {
             this._isCpuHovered = false;
             this._hideTooltip();
         });
@@ -247,11 +293,11 @@ export default class AngieBarExtension extends Extension {
         this._ramIsland.add_child(this._ramIcon);
         this._ramIsland.add_child(this._ramLabel);
         this._ramIsland.reactive = true;
-        this._ramIsland.connect('enter-event', () => {
+        this._connect(this._ramIsland, 'enter-event', () => {
             let details = this._ramDetailsText || 'Loading...';
             this._showTooltip(this._ramIsland, `Memory Details\nUsage: ${this._ramLabel.text}\nAmount: ${details}`);
         });
-        this._ramIsland.connect('leave-event', () => this._hideTooltip());
+        this._connect(this._ramIsland, 'leave-event', () => this._hideTooltip());
 
         this._prevCpuTotal = 0;
         this._prevCpuIdle = 0;
@@ -289,7 +335,7 @@ export default class AngieBarExtension extends Extension {
         this._netBoxLayout.add_child(this._avgBox);
 
         this._showNetCompact = false;
-        this._netIsland.connect('clicked', () => {
+        this._connect(this._netIsland, 'clicked', () => {
             this._showNetCompact = !this._showNetCompact;
             this._updateNet();
         });
@@ -327,7 +373,7 @@ export default class AngieBarExtension extends Extension {
         Main.uiGroup.add_child(this._todoMenu.actor);
         this._todoMenu.actor.hide();
 
-        this._todoIsland.connect('clicked', () => {
+        this._connect(this._todoIsland, 'clicked', () => {
             this._todoMenu.toggle();
         });
 
@@ -375,7 +421,7 @@ export default class AngieBarExtension extends Extension {
         this._activeMicApps = [];
         this._activeCamApps = [];
 
-        this._privacyIsland.connect('enter-event', () => {
+        this._connect(this._privacyIsland, 'enter-event', () => {
             let text = [];
             if (this._activeMicApps.length > 0) {
                 text.push(`Microphone in use by:\n- ${this._activeMicApps.join('\n- ')}`);
@@ -387,7 +433,7 @@ export default class AngieBarExtension extends Extension {
                 this._showTooltip(this._privacyIsland, text.join('\n\n'));
             }
         });
-        this._privacyIsland.connect('leave-event', () => this._hideTooltip());
+        this._connect(this._privacyIsland, 'leave-event', () => this._hideTooltip());
 
         // ASSEMBLAGGIO PANNELLO
         Main.panel._leftBox.add_style_class_name('waybar-left-box');
@@ -437,18 +483,18 @@ export default class AngieBarExtension extends Extension {
         this._timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => {
             this._tickCount++;
             
-            if (this._centerIsland.visible) {
+            if (this._centerIsland && this._centerIsland.visible) {
                 this._timeLabel.set_text(this._getFormattedTime());
             }
 
             if (this._tickCount % 3 === 0) {
-                if (this._netIsland.visible) this._updateNet();
-                if (this._cpuIsland.visible) this._updateCpu();
-                if (this._ramIsland.visible) this._updateRam();
+                if (this._netIsland && this._netIsland.visible) this._updateNet();
+                if (this._cpuIsland && this._cpuIsland.visible) this._updateCpu();
+                if (this._ramIsland && this._ramIsland.visible) this._updateRam();
             }
 
             if (this._tickCount % 5 === 0) {
-                if (this._quickSettingsBtn.visible) this._updateSystemIconsAsync();
+                if (this._quickSettingsBtn && this._quickSettingsBtn.visible) this._updateSystemIconsAsync();
                 this._updatePrivacyAsync();
             }
 
@@ -459,8 +505,6 @@ export default class AngieBarExtension extends Extension {
         this._initMedia();
         this._visualizerTimerId = null;
     }
-
-
 
     _initMedia() {
         this._mediaPlaying = false;
@@ -512,8 +556,8 @@ export default class AngieBarExtension extends Extension {
             (obj, res) => {
                 try {
                     let proxy = Gio.DBusProxy.new_for_bus_finish(res);
-                    this._players.set(name, proxy);
-                    proxy.connect('g-properties-changed', () => this._updateMediaStatus());
+                    let signalId = proxy.connect('g-properties-changed', () => this._updateMediaStatus());
+                    this._players.set(name, { proxy, signalId });
                     this._updateMediaStatus();
                 } catch (e) { console.log(`AngieBar: Failed to init player ${name}: ${e}`); }
             }
@@ -522,16 +566,23 @@ export default class AngieBarExtension extends Extension {
 
     _removePlayer(name) {
         if (this._players.has(name)) {
+            let item = this._players.get(name);
+            if (item && item.proxy && item.signalId) {
+                try { item.proxy.disconnect(item.signalId); } catch (e) {}
+            }
             this._players.delete(name);
             this._updateMediaStatus();
         }
     }
 
     async _updateMediaStatus() {
+        if (!this._players) return;
         let anyPlaying = false;
         let bestArtUrl = null;
 
-        for (let [name, proxy] of this._players) {
+        for (let [name, item] of this._players) {
+            let proxy = item?.proxy || item;
+            if (!proxy) continue;
             try {
                 let status = proxy.PlaybackStatus || (proxy.get_cached_property('PlaybackStatus')?.deep_unpack());
                 if (status === 'Playing') {
@@ -554,11 +605,13 @@ export default class AngieBarExtension extends Extension {
             if (bestArtUrl) {
                 await this._loadArt(bestArtUrl);
             } else {
-                this._mediaArt.gicon = Gio.ThemedIcon.new('audio-x-generic-symbolic');
-                this._mediaArt.show();
+                if (this._mediaArt) {
+                    this._mediaArt.gicon = Gio.ThemedIcon.new('audio-x-generic-symbolic');
+                    this._mediaArt.show();
+                }
             }
         } else {
-            this._mediaArt.hide();
+            if (this._mediaArt) this._mediaArt.hide();
             this._lastArtUrl = null;
         }
 
@@ -567,7 +620,7 @@ export default class AngieBarExtension extends Extension {
 
     async _loadArt(url) {
         if (url === this._lastArtUrl) {
-            this._mediaArt.show();
+            if (this._mediaArt) this._mediaArt.show();
             return;
         }
         this._lastArtUrl = url;
@@ -596,13 +649,15 @@ export default class AngieBarExtension extends Extension {
             if (localPath) {
                 try {
                     let file = Gio.File.new_for_path(localPath);
-                    this._mediaArt.gicon = new Gio.FileIcon({ file: file });
-                    this._mediaArt.show();
-                } catch (err) { this._mediaArt.hide(); }
+                    if (this._mediaArt) {
+                        this._mediaArt.gicon = new Gio.FileIcon({ file: file });
+                        this._mediaArt.show();
+                    }
+                } catch (err) { if (this._mediaArt) this._mediaArt.hide(); }
             } else {
-                this._mediaArt.hide();
+                if (this._mediaArt) this._mediaArt.hide();
             }
-        } catch (e) { this._mediaArt.hide(); }
+        } catch (e) { if (this._mediaArt) this._mediaArt.hide(); }
     }
 
     _startVisualizer() {
@@ -618,25 +673,27 @@ export default class AngieBarExtension extends Extension {
         if (this._visualizerTimerId) {
             GLib.source_remove(this._visualizerTimerId);
             this._visualizerTimerId = null;
-            this._mediaWave.get_children().forEach(dot => { dot.translation_y = 0; });
+            if (this._mediaWave) {
+                this._mediaWave.get_children().forEach(dot => { dot.translation_y = 0; });
+            }
         }
     }
 
     _updateMediaUI() {
         if (this._mediaPlaying) {
-            this._mediaWave.visible = true;
-            this._centerIsland.add_style_class_name('media-active');
+            if (this._mediaWave) this._mediaWave.visible = true;
+            if (this._centerIsland) this._centerIsland.add_style_class_name('media-active');
             this._startVisualizer();
         } else {
-            this._mediaArt.visible = false;
-            this._mediaWave.visible = false;
-            this._centerIsland.remove_style_class_name('media-active');
+            if (this._mediaArt) this._mediaArt.visible = false;
+            if (this._mediaWave) this._mediaWave.visible = false;
+            if (this._centerIsland) this._centerIsland.remove_style_class_name('media-active');
             this._stopVisualizer();
         }
     }
 
     _animateWave() {
-        if (!this._mediaPlaying || !this._centerIsland.visible) return;
+        if (!this._mediaPlaying || !this._centerIsland || !this._centerIsland.visible || !this._mediaWave) return;
         this._mediaWave.get_children().forEach((dot, i) => {
             let t = Date.now() / 150;
             let offset = Math.sin(t + i * 1.5) * 5;
@@ -645,9 +702,70 @@ export default class AngieBarExtension extends Extension {
         });
     }
 
+    _cleanupObjects() {
+        if (this._avgBox) { try { this._avgBox.destroy(); } catch (e) {} this._avgBox = null; }
+        if (this._avgIcon) { try { this._avgIcon.destroy(); } catch (e) {} this._avgIcon = null; }
+        if (this._avgLabel) { try { this._avgLabel.destroy(); } catch (e) {} this._avgLabel = null; }
+        if (this._batteryBtn) { try { this._batteryBtn.destroy(); } catch (e) {} this._batteryBtn = null; }
+        if (this._batteryIcon) { try { this._batteryIcon.destroy(); } catch (e) {} this._batteryIcon = null; }
+        if (this._batteryLabel) { try { this._batteryLabel.destroy(); } catch (e) {} this._batteryLabel = null; }
+        if (this._chargingIcon) { try { this._chargingIcon.destroy(); } catch (e) {} this._chargingIcon = null; }
+        if (this._btIcon) { try { this._btIcon.destroy(); } catch (e) {} this._btIcon = null; }
+        if (this._volIcon) { try { this._volIcon.destroy(); } catch (e) {} this._volIcon = null; }
+        if (this._wifiIcon) { try { this._wifiIcon.destroy(); } catch (e) {} this._wifiIcon = null; }
+        if (this._quickSettingsBtn) { try { this._quickSettingsBtn.destroy(); } catch (e) {} this._quickSettingsBtn = null; }
+        if (this._separator) { try { this._separator.destroy(); } catch (e) {} this._separator = null; }
+        if (this._camBox) { try { this._camBox.destroy(); } catch (e) {} this._camBox = null; }
+        if (this._micBox) { try { this._micBox.destroy(); } catch (e) {} this._micBox = null; }
+        if (this._privacyIsland) { try { this._privacyIsland.destroy(); } catch (e) {} this._privacyIsland = null; }
+        if (this._centerBoxLayout) { try { this._centerBoxLayout.destroy(); } catch (e) {} this._centerBoxLayout = null; }
+        if (this._centerIsland) { try { this._centerIsland.destroy(); } catch (e) {} this._centerIsland = null; }
+        if (this._timeLabel) { try { this._timeLabel.destroy(); } catch (e) {} this._timeLabel = null; }
+        if (this._mediaArt) { try { this._mediaArt.destroy(); } catch (e) {} this._mediaArt = null; }
+        if (this._mediaWave) { try { this._mediaWave.destroy(); } catch (e) {} this._mediaWave = null; }
+        if (this._cpuIcon) { try { this._cpuIcon.destroy(); } catch (e) {} this._cpuIcon = null; }
+        if (this._cpuIsland) { try { this._cpuIsland.destroy(); } catch (e) {} this._cpuIsland = null; }
+        if (this._cpuLabel) { try { this._cpuLabel.destroy(); } catch (e) {} this._cpuLabel = null; }
+        if (this._ramIcon) { try { this._ramIcon.destroy(); } catch (e) {} this._ramIcon = null; }
+        if (this._ramIsland) { try { this._ramIsland.destroy(); } catch (e) {} this._ramIsland = null; }
+        if (this._ramLabel) { try { this._ramLabel.destroy(); } catch (e) {} this._ramLabel = null; }
+        if (this._downBox) { try { this._downBox.destroy(); } catch (e) {} this._downBox = null; }
+        if (this._downLabel) { try { this._downLabel.destroy(); } catch (e) {} this._downLabel = null; }
+        if (this._upBox) { try { this._upBox.destroy(); } catch (e) {} this._upBox = null; }
+        if (this._upLabel) { try { this._upLabel.destroy(); } catch (e) {} this._upLabel = null; }
+        if (this._netBoxLayout) { try { this._netBoxLayout.destroy(); } catch (e) {} this._netBoxLayout = null; }
+        if (this._netIsland) { try { this._netIsland.destroy(); } catch (e) {} this._netIsland = null; }
+        if (this._logoIcon) { try { this._logoIcon.destroy(); } catch (e) {} this._logoIcon = null; }
+        if (this._logoIsland) { try { this._logoIsland.destroy(); } catch (e) {} this._logoIsland = null; }
+        if (this._powerIsland) { try { this._powerIsland.destroy(); } catch (e) {} this._powerIsland = null; }
+        if (this._rightIsland) { try { this._rightIsland.destroy(); } catch (e) {} this._rightIsland = null; }
+        if (this._workspacesIsland) { try { this._workspacesIsland.destroy(); } catch (e) {} this._workspacesIsland = null; }
+        if (this._todoBoxLayout) { try { this._todoBoxLayout.destroy(); } catch (e) {} this._todoBoxLayout = null; }
+        if (this._todoEntry) { try { this._todoEntry.destroy(); } catch (e) {} this._todoEntry = null; }
+        if (this._todoIsland) { try { this._todoIsland.destroy(); } catch (e) {} this._todoIsland = null; }
+        if (this._todoLabel) { try { this._todoLabel.destroy(); } catch (e) {} this._todoLabel = null; }
+        if (this._todoListContainer) { try { this._todoListContainer.destroy(); } catch (e) {} this._todoListContainer = null; }
+        if (this._tooltipLabel) { try { this._tooltipLabel.destroy(); } catch (e) {} this._tooltipLabel = null; }
+        if (this._uptimeItem) { try { this._uptimeItem.destroy(); } catch (e) {} this._uptimeItem = null; }
+        if (this._logoMenuManager) { try { if (typeof this._logoMenuManager.destroy === 'function') this._logoMenuManager.destroy(); } catch (e) {} this._logoMenuManager = null; }
+        if (this._todoMenuManager) { try { if (typeof this._todoMenuManager.destroy === 'function') this._todoMenuManager.destroy(); } catch (e) {} this._todoMenuManager = null; }
+    }
+
     disable() {
+        if (this._objectSignals) {
+            this._objectSignals.forEach(({ object, id }) => {
+                try {
+                    if (object && id && typeof object.disconnect === 'function')
+                        object.disconnect(id);
+                } catch (e) { }
+            });
+            this._objectSignals = [];
+        }
+
         if (this._settingsSignals) {
-            this._settingsSignals.forEach(id => this._settings.disconnect(id));
+            this._settingsSignals.forEach(id => {
+                try { this._settings.disconnect(id); } catch (e) {}
+            });
             this._settingsSignals = [];
         }
         this._settings = null;
@@ -663,77 +781,97 @@ export default class AngieBarExtension extends Extension {
         }
 
         if (this._mprisWatchId) {
-            this._dbus.signal_unsubscribe(this._mprisWatchId);
+            try { this._dbus.signal_unsubscribe(this._mprisWatchId); } catch (e) {}
             this._mprisWatchId = null;
         }
 
         if (this._displayDevice && this._batterySignals) {
-            this._batterySignals.forEach(id => this._displayDevice.disconnect(id));
+            this._batterySignals.forEach(id => {
+                try { this._displayDevice.disconnect(id); } catch (e) {}
+            });
             this._batterySignals = [];
         }
 
-        if (this._wsSignals) {
-            this._wsSignals.forEach(id => this._wsManager.disconnect(id));
+        if (this._wsSignals && this._wsManager) {
+            this._wsSignals.forEach(id => {
+                try { this._wsManager.disconnect(id); } catch (e) {}
+            });
             this._wsSignals = [];
         }
 
-        const destroyAndRemove = (actor, box) => {
-            if (actor) {
-                try {
-                    if (actor.get_parent() === box)
-                        box.remove_child(actor);
-                    actor.destroy();
-                } catch (e) { }
-            }
-        };
-
-        destroyAndRemove(this._workspacesIsland, Main.panel._leftBox);
-        destroyAndRemove(this._logoIsland, Main.panel._leftBox);
-        destroyAndRemove(this._privacyIsland, Main.panel._leftBox);
-        destroyAndRemove(this._netIsland, Main.panel._leftBox);
-        destroyAndRemove(this._todoIsland, Main.panel._leftBox);
-        if (this._todoMenu) {
-            this._todoMenuManager.removeMenu(this._todoMenu);
-            this._todoMenu.destroy();
-            this._todoMenu = null;
-        }
-        this._todoMenuManager = null;
-        if (this._logoMenu) {
-            if (this._logoMenuOpenSignal) {
-                this._logoMenu.disconnect(this._logoMenuOpenSignal);
-                this._logoMenuOpenSignal = null;
-            }
-            this._logoMenuManager.removeMenu(this._logoMenu);
-            this._logoMenu.destroy();
-            this._logoMenu = null;
-        }
-        this._logoMenuManager = null;
-        destroyAndRemove(this._centerIsland, Main.panel._centerBox);
-        destroyAndRemove(this._cpuIsland, Main.panel._rightBox);
-        destroyAndRemove(this._ramIsland, Main.panel._rightBox);
-        destroyAndRemove(this._rightIsland, Main.panel._rightBox);
-        destroyAndRemove(this._powerIsland, Main.panel._rightBox);
-
-        if (this._tooltip) {
-            Main.layoutManager.removeChrome(this._tooltip);
-            this._tooltip.destroy();
-            this._tooltip = null;
-        }
-
-
         if (this._players) {
+            for (let [name, item] of this._players) {
+                if (item && item.proxy && item.signalId) {
+                    try { item.proxy.disconnect(item.signalId); } catch (e) {}
+                }
+            }
             this._players.clear();
             this._players = null;
         }
 
+        const removeFromBox = (actor, box) => {
+            if (actor && box) {
+                try {
+                    if (actor.get_parent() === box)
+                        box.remove_child(actor);
+                } catch (e) { }
+            }
+        };
+
+        removeFromBox(this._workspacesIsland, Main.panel._leftBox);
+        removeFromBox(this._logoIsland, Main.panel._leftBox);
+        removeFromBox(this._privacyIsland, Main.panel._leftBox);
+        removeFromBox(this._netIsland, Main.panel._leftBox);
+        removeFromBox(this._todoIsland, Main.panel._leftBox);
+        removeFromBox(this._centerIsland, Main.panel._centerBox);
+        removeFromBox(this._cpuIsland, Main.panel._rightBox);
+        removeFromBox(this._ramIsland, Main.panel._rightBox);
+        removeFromBox(this._rightIsland, Main.panel._rightBox);
+        removeFromBox(this._powerIsland, Main.panel._rightBox);
+
+        if (this._todoMenu) {
+            if (this._todoMenuManager) {
+                try { this._todoMenuManager.removeMenu(this._todoMenu); } catch (e) {}
+            }
+            try { this._todoMenu.destroy(); } catch (e) {}
+            this._todoMenu = null;
+        }
+        this._todoMenuManager = null;
+
+        if (this._logoMenu) {
+            if (this._logoMenuOpenSignal) {
+                try { this._logoMenu.disconnect(this._logoMenuOpenSignal); } catch (e) {}
+                this._logoMenuOpenSignal = null;
+            }
+            if (this._logoMenuManager) {
+                try { this._logoMenuManager.removeMenu(this._logoMenu); } catch (e) {}
+            }
+            try { this._logoMenu.destroy(); } catch (e) {}
+            this._logoMenu = null;
+        }
+        this._logoMenuManager = null;
+
+        if (this._tooltip) {
+            try { Main.layoutManager.removeChrome(this._tooltip); } catch (e) {}
+            try { this._tooltip.destroy(); } catch (e) {}
+            this._tooltip = null;
+        }
+
+        this._cleanupObjects();
+
+        this._upowerClient = null;
+        this._displayDevice = null;
+        this._wsManager = null;
+        this._dbus = null;
+
         // --- RIPRISTINO DEI MENU DI SISTEMA (FONDAMENTALE) ---
         let dateMenu = Main.panel.statusArea.dateMenu;
-        if (dateMenu && dateMenu.menu.sourceActor === this._centerIsland) {
+        if (dateMenu && dateMenu.menu && dateMenu.menu.sourceActor === this._centerIsland) {
             dateMenu.menu.sourceActor = dateMenu;
         }
 
         let qsMenu = Main.panel.statusArea.quickSettings;
-        if (qsMenu && qsMenu.menu.sourceActor === this._rightIsland) {
+        if (qsMenu && qsMenu.menu && qsMenu.menu.sourceActor === this._rightIsland) {
             qsMenu.menu.sourceActor = qsMenu;
         }
 
@@ -748,7 +886,7 @@ export default class AngieBarExtension extends Extension {
 
     _updateLogoIcon() {
         if (!this._logoIsland || !this._logoIcon) return;
-        const customPath = this._settings.get_string('logo-icon-path');
+        const customPath = this._settings ? this._settings.get_string('logo-icon-path') : '';
         let imgPath;
         if (customPath && GLib.file_test(customPath, GLib.FileTest.EXISTS)) {
             imgPath = customPath;
@@ -756,21 +894,18 @@ export default class AngieBarExtension extends Extension {
             imgPath = `${this.path}/AngieBarUser.svg`;
         }
 
-        // Ottieni il colore di sfondo corrente (stesso usato da _applyColor)
-        const color   = this._settings.get_string('custom-color');
-        const opacity = this._settings.get_double('island-opacity');
+        const color   = this._settings ? this._settings.get_string('custom-color') : '#000000';
+        const opacity = this._settings ? this._settings.get_double('island-opacity') : 0.8;
         const bgColor = this._colorWithOpacity(color, opacity);
 
-        const fillCircle = this._settings.get_boolean('logo-fill-circle');
+        const fillCircle = this._settings ? this._settings.get_boolean('logo-fill-circle') : false;
 
         if (fillCircle) {
-            // Modalità cover: l'immagine ritaglia e riempie tutto il cerchio
             this._logoIcon.hide();
             this._logoIsland.set_style(
                 `background-color: ${bgColor}; background-image: url('${imgPath}'); background-size: cover; background-position: center;`
             );
         } else {
-            // Modalità icona: St.Icon centrato, sfondo normale con trasparenza
             this._logoIcon.gicon = Gio.Icon.new_for_string(imgPath);
             this._logoIcon.show();
             this._logoIsland.set_style(`background-color: ${bgColor};`);
@@ -792,9 +927,10 @@ export default class AngieBarExtension extends Extension {
     }
 
     _updateWorkspaces() {
+        if (!this._workspacesIsland) return;
         this._workspacesIsland.destroy_all_children();
-        let numWorkspaces = this._wsManager.n_workspaces;
-        let activeIndex = this._wsManager.get_active_workspace_index();
+        let numWorkspaces = this._wsManager ? this._wsManager.n_workspaces : 0;
+        let activeIndex = this._wsManager ? this._wsManager.get_active_workspace_index() : 0;
 
         for (let i = 0; i < numWorkspaces; i++) {
             let isActive = (i === activeIndex);
@@ -806,7 +942,7 @@ export default class AngieBarExtension extends Extension {
             });
 
             if (isActive) {
-                let wsColor = this._settings.get_string('workspace-active-color');
+                let wsColor = this._settings ? this._settings.get_string('workspace-active-color') : '#ffffff';
                 let shadowColor = this._colorWithOpacity(wsColor, 0.4);
                 dotBtn.set_style(`background-color: ${wsColor} !important; box-shadow: 0px 0px 8px ${shadowColor};`);
 
@@ -814,8 +950,8 @@ export default class AngieBarExtension extends Extension {
                 dotBtn.set_child(innerDot);
             }
 
-            dotBtn.connect('clicked', () => {
-                if (i < numWorkspaces) {
+            this._connect(dotBtn, 'clicked', () => {
+                if (this._wsManager && i < this._wsManager.n_workspaces) {
                     this._wsManager.get_workspace_by_index(i).activate(global.get_current_time());
                 }
             });
@@ -830,7 +966,7 @@ export default class AngieBarExtension extends Extension {
     }
 
     _updateBattery() {
-        if (!this._displayDevice) return;
+        if (!this._displayDevice || !this._batteryIcon || !this._batteryLabel || !this._chargingIcon) return;
 
         let percent = Math.floor(this._displayDevice.percentage);
         let state = this._displayDevice.state;
@@ -902,113 +1038,100 @@ export default class AngieBarExtension extends Extension {
                 }
             }
 
-            let [res, contents] = GLib.file_get_contents('/proc/cpuinfo');
+            let contentsText = await this._readFileAsync('/proc/cpuinfo');
             let freqs = [];
-            if (res) {
-                let text = new TextDecoder().decode(contents);
-                let lines = text.split('\n');
-                for (let line of lines) {
-                    if (line.startsWith('cpu MHz')) {
-                        let freq = parseFloat(line.split(':')[1].trim());
-                        freqs.push(freq.toFixed(0) + ' MHz');
-                    }
+            let lines = contentsText.split('\n');
+            for (let line of lines) {
+                if (line.startsWith('cpu MHz')) {
+                    let freq = parseFloat(line.split(':')[1].trim());
+                    freqs.push(freq.toFixed(0) + ' MHz');
                 }
             }
 
-            let tooltipText = `CPU Usage Details\nLoad: ${this._cpuLabel.text}\nTemp: ${temp}\n\nCores:\n`;
+            let currentLoad = this._cpuLabel ? this._cpuLabel.text : '0.0%';
+            let tooltipText = `CPU Usage Details\nLoad: ${currentLoad}\nTemp: ${temp}\n\nCores:\n`;
             for (let i = 0; i < freqs.length; i++) {
                 tooltipText += `Core ${i}: ${freqs[i]}\n`;
             }
             return tooltipText.trim();
         } catch (e) {
-            return `CPU Usage Details\nLoad: ${this._cpuLabel.text}`;
+            let currentLoad = this._cpuLabel ? this._cpuLabel.text : '0.0%';
+            return `CPU Usage Details\nLoad: ${currentLoad}`;
         }
     }
 
-    _updateCpu() {
+    async _updateCpu() {
         try {
-            let [res, contents] = GLib.file_get_contents('/proc/stat');
-            if (res) {
-                let decoder = new TextDecoder();
-                let text = decoder.decode(contents);
-                let line = text.split('\n')[0];
+            let text = await this._readFileAsync('/proc/stat');
+            let line = text.split('\n')[0];
+            let parts = line.split(/\s+/);
+            let idle = parseInt(parts[4]);
+            let total = parts.slice(1, 8).reduce((acc, val) => acc + parseInt(val), 0);
+
+            let diffIdle = idle - this._prevCpuIdle;
+            let diffTotal = total - this._prevCpuTotal;
+            let usage = diffTotal > 0 ? 100 * (1 - diffIdle / diffTotal) : 0;
+
+            if (this._cpuLabel) this._cpuLabel.set_text(`${usage.toFixed(1)}%`);
+            this._prevCpuTotal = total;
+            this._prevCpuIdle = idle;
+        } catch (e) { if (this._cpuLabel) this._cpuLabel.set_text('err%'); }
+    }
+
+    async _updateRam() {
+        try {
+            let text = await this._readFileAsync('/proc/meminfo');
+            let lines = text.split('\n');
+            let memTotal = 0, memAvailable = 0;
+            for (let line of lines) {
+                if (line.startsWith('MemTotal:')) memTotal = parseInt(line.split(/\s+/)[1]);
+                if (line.startsWith('MemAvailable:')) memAvailable = parseInt(line.split(/\s+/)[1]);
+            }
+            if (memTotal > 0) {
+                let memUsed = memTotal - memAvailable;
+                let usedGB = (memUsed / 1024 / 1024).toFixed(1);
+                let availableGB = (memAvailable / 1024 / 1024).toFixed(1);
+                this._ramDetailsText = `${usedGB}GB / ${availableGB}GB`;
+
+                let usage = 100 * (1 - memAvailable / memTotal);
+                if (this._ramLabel) this._ramLabel.set_text(`${usage.toFixed(1)}%`);
+            }
+        } catch (e) { if (this._ramLabel) this._ramLabel.set_text('err%'); }
+    }
+
+    async _updateNet() {
+        try {
+            let text = await this._readFileAsync('/proc/net/dev');
+            let lines = text.split('\n');
+            let totalRx = 0, totalTx = 0;
+
+            for (let i = 2; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line || line.startsWith('lo:')) continue;
                 let parts = line.split(/\s+/);
-                let idle = parseInt(parts[4]);
-                let total = parts.slice(1, 8).reduce((acc, val) => acc + parseInt(val), 0);
-
-                let diffIdle = idle - this._prevCpuIdle;
-                let diffTotal = total - this._prevCpuTotal;
-                let usage = diffTotal > 0 ? 100 * (1 - diffIdle / diffTotal) : 0;
-
-                this._cpuLabel.set_text(`${usage.toFixed(1)}%`);
-                this._prevCpuTotal = total;
-                this._prevCpuIdle = idle;
-            }
-        } catch (e) { this._cpuLabel.set_text('err%'); }
-    }
-
-    _updateRam() {
-        try {
-            let [res, contents] = GLib.file_get_contents('/proc/meminfo');
-            if (res) {
-                let decoder = new TextDecoder();
-                let text = decoder.decode(contents);
-                let lines = text.split('\n');
-                let memTotal = 0, memAvailable = 0;
-                for (let line of lines) {
-                    if (line.startsWith('MemTotal:')) memTotal = parseInt(line.split(/\s+/)[1]);
-                    if (line.startsWith('MemAvailable:')) memAvailable = parseInt(line.split(/\s+/)[1]);
-                }
-                if (memTotal > 0) {
-                    let memUsed = memTotal - memAvailable;
-                    let usedGB = (memUsed / 1024 / 1024).toFixed(1);
-                    let availableGB = (memAvailable / 1024 / 1024).toFixed(1);
-                    this._ramDetailsText = `${usedGB}GB / ${availableGB}GB`;
-
-                    let usage = 100 * (1 - memAvailable / memTotal);
-                    this._ramLabel.set_text(`${usage.toFixed(1)}%`);
+                if (parts.length > 9) {
+                    totalRx += parseInt(parts[1]);
+                    totalTx += parseInt(parts[9]);
                 }
             }
-        } catch (e) { this._ramLabel.set_text('err%'); }
-    }
 
-    _updateNet() {
-        try {
-            let [res, contents] = GLib.file_get_contents('/proc/net/dev');
-            if (res) {
-                let decoder = new TextDecoder();
-                let text = decoder.decode(contents);
-                let lines = text.split('\n');
-                let totalRx = 0, totalTx = 0;
+            if (this._prevNetRx > 0) {
+                let diffRx = ((totalRx - this._prevNetRx) / 1024) / 3;
+                let diffTx = ((totalTx - this._prevNetTx) / 1024) / 3;
+                let avg = (diffRx + diffTx) / 2;
 
-                for (let i = 2; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if (!line || line.startsWith('lo:')) continue;
-                    let parts = line.split(/\s+/);
-                    if (parts.length > 9) {
-                        totalRx += parseInt(parts[1]);
-                        totalTx += parseInt(parts[9]);
-                    }
-                }
+                if (this._downLabel) this._downLabel.set_text(this._formatNetSpeed(diffRx));
+                if (this._upLabel) this._upLabel.set_text(this._formatNetSpeed(diffTx));
+                if (this._avgLabel) this._avgLabel.set_text(this._formatNetSpeed(avg));
 
-                if (this._prevNetRx > 0) {
-                    let diffRx = ((totalRx - this._prevNetRx) / 1024) / 3;
-                    let diffTx = ((totalTx - this._prevNetTx) / 1024) / 3;
-                    let avg = (diffRx + diffTx) / 2;
-
-                    this._downLabel.set_text(this._formatNetSpeed(diffRx));
-                    this._upLabel.set_text(this._formatNetSpeed(diffTx));
-                    this._avgLabel.set_text(this._formatNetSpeed(avg));
-
-                    this._downBox.visible = !this._showNetCompact;
-                    this._upBox.visible = !this._showNetCompact;
-                    this._avgBox.visible = this._showNetCompact;
-                }
-
-                this._prevNetRx = totalRx;
-                this._prevNetTx = totalTx;
+                if (this._downBox) this._downBox.visible = !this._showNetCompact;
+                if (this._upBox) this._upBox.visible = !this._showNetCompact;
+                if (this._avgBox) this._avgBox.visible = this._showNetCompact;
             }
-        } catch (e) { this._downLabel.set_text('err'); }
+
+            this._prevNetRx = totalRx;
+            this._prevNetTx = totalTx;
+        } catch (e) { if (this._downLabel) this._downLabel.set_text('err'); }
     }
 
     _formatNetSpeed(kb) {
@@ -1049,9 +1172,9 @@ export default class AngieBarExtension extends Extension {
                 let micActive = micApps.length > 0;
                 let camActive = camApps.length > 0;
 
-                this._micBox.visible = micActive;
-                this._camBox.visible = camActive;
-                this._privacyIsland.visible = micActive || camActive;
+                if (this._micBox) this._micBox.visible = micActive;
+                if (this._camBox) this._camBox.visible = camActive;
+                if (this._privacyIsland) this._privacyIsland.visible = micActive || camActive;
             }
         } catch (e) { }
         this._isCheckingPrivacy = false;
@@ -1068,7 +1191,7 @@ export default class AngieBarExtension extends Extension {
                 this._execCommandAsync('rfkill list bluetooth')
             ]);
 
-            if (volOut) {
+            if (volOut && this._volIcon) {
                 let isMuted = volOut.includes('[MUTED]');
                 let volMatch = volOut.match(/Volume: (\d\.\d+)/);
                 let volume = volMatch ? parseFloat(volMatch[1]) : 0;
@@ -1084,7 +1207,7 @@ export default class AngieBarExtension extends Extension {
                 }
             }
 
-            if (wifiOut) {
+            if (wifiOut && this._wifiIcon) {
                 let status = wifiOut.trim();
                 if (status === 'full') {
                     this._wifiIcon.icon_name = 'network-wireless-signal-excellent-symbolic';
@@ -1097,7 +1220,7 @@ export default class AngieBarExtension extends Extension {
                 }
             }
 
-            if (btOut) {
+            if (btOut && this._btIcon) {
                 if (btOut.includes('Soft blocked: yes') || !btOut.includes('bluetooth')) {
                     this._btIcon.icon_name = 'bluetooth-disabled-symbolic';
                     this._btIcon.add_style_class_name('icon-disabled');
@@ -1113,30 +1236,26 @@ export default class AngieBarExtension extends Extension {
 
     _updateVisibility() {
         if (!this._settings) return;
-        this._logoIsland.visible = this._settings.get_boolean('show-logo');
-        this._workspacesIsland.visible = this._settings.get_boolean('show-workspaces');
-        this._netIsland.visible = this._settings.get_boolean('show-net');
-        this._todoIsland.visible = this._settings.get_boolean('show-todo');
-        this._centerIsland.visible = this._settings.get_boolean('show-clock');
-        this._cpuIsland.visible = this._settings.get_boolean('show-cpu');
-        this._ramIsland.visible = this._settings.get_boolean('show-ram');
-        this._quickSettingsBtn.visible = this._settings.get_boolean('show-quick-settings');
-        this._batteryBtn.visible = this._settings.get_boolean('show-battery');
-        this._powerIsland.visible = this._settings.get_boolean('show-power');
+        if (this._logoIsland) this._logoIsland.visible = this._settings.get_boolean('show-logo');
+        if (this._workspacesIsland) this._workspacesIsland.visible = this._settings.get_boolean('show-workspaces');
+        if (this._netIsland) this._netIsland.visible = this._settings.get_boolean('show-net');
+        if (this._todoIsland) this._todoIsland.visible = this._settings.get_boolean('show-todo');
+        if (this._centerIsland) this._centerIsland.visible = this._settings.get_boolean('show-clock');
+        if (this._cpuIsland) this._cpuIsland.visible = this._settings.get_boolean('show-cpu');
+        if (this._ramIsland) this._ramIsland.visible = this._settings.get_boolean('show-ram');
+        if (this._quickSettingsBtn) this._quickSettingsBtn.visible = this._settings.get_boolean('show-quick-settings');
+        if (this._batteryBtn) this._batteryBtn.visible = this._settings.get_boolean('show-battery');
+        if (this._powerIsland) this._powerIsland.visible = this._settings.get_boolean('show-power');
 
-        if (this._separator)
+        if (this._separator && this._quickSettingsBtn && this._batteryBtn)
             this._separator.visible = (this._quickSettingsBtn.visible && this._batteryBtn.visible);
 
-        if (this._rightIsland)
+        if (this._rightIsland && this._quickSettingsBtn && this._batteryBtn)
             this._rightIsland.visible = (this._quickSettingsBtn.visible || this._batteryBtn.visible);
     }
 
     // ── Color helpers ─────────────────────────────────────────────────────────
 
-    /**
-     * Convert any CSS color string (hex #rgb/#rrggbb, rgb(), rgba()) to an
-     * rgba() string using the given alpha value.
-     */
     _colorWithOpacity(color, alpha) {
         color = (color || '').trim();
 
@@ -1154,10 +1273,9 @@ export default class AngieBarExtension extends Extension {
             return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
 
-        return color; // Fallback
+        return color;
     }
 
-    /** Apply the current custom-color + island-opacity to every island. */
     _applyColor() {
         if (!this._settings) return;
         const color   = this._settings.get_string('custom-color');
@@ -1171,7 +1289,6 @@ export default class AngieBarExtension extends Extension {
         ];
         islands.forEach(island => island?.set_style(`background-color: ${final};`));
 
-        // Il logo ha uno stile composto (può avere background-image), lo aggiorna separatamente
         this._updateLogoIcon();
     }
 
@@ -1188,7 +1305,7 @@ export default class AngieBarExtension extends Extension {
     }
 
     _showTooltip(actor, text) {
-        if (!text || text === '') return;
+        if (!text || text === '' || !this._tooltipLabel || !this._tooltip) return;
         this._tooltipLabel.set_text(text);
         this._tooltip.visible = true;
         this._tooltip.opacity = 255;
@@ -1196,7 +1313,6 @@ export default class AngieBarExtension extends Extension {
         let [x, y] = actor.get_transformed_position();
         let [w, h] = actor.get_transformed_size();
 
-        // Posizionamento centrato sotto l'elemento
         let tw = this._tooltip.get_preferred_width(-1)[1];
         let tooltipX = Math.floor(x + (w / 2) - (tw / 2));
 
@@ -1246,12 +1362,10 @@ export default class AngieBarExtension extends Extension {
 
     async _getWifiInfoAsync() {
         try {
-            // Metodo più diretto per l'SSID attivo
             let ssid = await this._execCommandAsync("nmcli -t -f active,ssid device wifi list | grep '^yes' | cut -d: -f2 | head -n 1");
             ssid = ssid.trim();
 
             if (!ssid) {
-                // Fallback: prova a vedere se c'è una connessione attiva generica di tipo wireless
                 ssid = await this._execCommandAsync("nmcli -t -f name,type connection show --active | grep '802-11-wireless' | cut -d: -f1 | head -n 1");
                 ssid = ssid.trim();
             }
@@ -1268,38 +1382,34 @@ export default class AngieBarExtension extends Extension {
         } catch (e) { return 'WiFi: Error'; }
     }
 
-
-
-
-    _loadTodos() {
+    async _loadTodos() {
         this._todos = [];
         this._todoFilePath = GLib.get_user_config_dir() + '/angiebar-todos.json';
         let legacyPath = GLib.get_user_config_dir() + '/waybar-clone-todos.json';
         try {
             let targetPath = GLib.file_test(this._todoFilePath, GLib.FileTest.EXISTS) ? this._todoFilePath : legacyPath;
-            let [res, contents] = GLib.file_get_contents(targetPath);
-            if (res) {
-                this._todos = JSON.parse(new TextDecoder().decode(contents));
-            }
+            let contents = await this._readFileAsync(targetPath);
+            this._todos = JSON.parse(contents);
         } catch (e) {
             this._todos = [
                 { text: 'Finish bar setup', done: true },
                 { text: 'Drink water', done: false },
                 { text: 'Write code for the widget', done: false }
             ];
-            this._saveTodos();
+            await this._saveTodos();
         }
         this._updateTodoUI();
     }
 
-    _saveTodos() {
+    async _saveTodos() {
         try {
             let data = JSON.stringify(this._todos);
-            GLib.file_set_contents(this._todoFilePath, data);
+            await this._writeFileAsync(this._todoFilePath, data);
         } catch (e) { }
     }
 
     _buildTodoMenu() {
+        if (!this._todoMenu) return;
         this._todoMenu.box.add_style_class_name('todo-popup-box');
 
         // Header
@@ -1311,7 +1421,7 @@ export default class AngieBarExtension extends Extension {
         headerTitleBox.add_child(headerTitle);
 
         let clearBtn = new St.Button({ style_class: 'todo-clear-btn', label: 'Clear completed', y_align: Clutter.ActorAlign.CENTER, x_expand: true, x_align: Clutter.ActorAlign.END });
-        clearBtn.connect('clicked', () => {
+        this._connect(clearBtn, 'clicked', () => {
             this._todos = this._todos.filter(t => !t.done);
             this._saveTodos();
             this._updateTodoUI();
@@ -1344,8 +1454,8 @@ export default class AngieBarExtension extends Extension {
                 this._updateTodoUI();
             }
         };
-        addBtn.connect('clicked', addAction);
-        this._todoEntry.clutter_text.connect('activate', addAction);
+        this._connect(addBtn, 'clicked', addAction);
+        this._connect(this._todoEntry.clutter_text, 'activate', addAction);
 
         let inputItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
         inputItem.add_child(inputBox);
@@ -1361,6 +1471,7 @@ export default class AngieBarExtension extends Extension {
     }
 
     _updateTodoUI() {
+        if (!this._todoListContainer) return;
         this._todoListContainer.destroy_all_children();
         let doneCount = 0;
 
@@ -1377,7 +1488,7 @@ export default class AngieBarExtension extends Extension {
             taskBox.add_child(checkBtn);
             taskBox.add_child(taskLabel);
 
-            taskBox.connect('button-press-event', () => {
+            this._connect(taskBox, 'button-press-event', () => {
                 task.done = !task.done;
                 this._saveTodos();
                 this._updateTodoUI();
@@ -1387,7 +1498,9 @@ export default class AngieBarExtension extends Extension {
             this._todoListContainer.add_child(taskBox);
         });
 
-        this._todoLabel.set_text(`${this._todos.length - doneCount}/${this._todos.length}`);
+        if (this._todoLabel) {
+            this._todoLabel.set_text(`${this._todos.length - doneCount}/${this._todos.length}`);
+        }
     }
 
     _buildLogoMenu() {
@@ -1396,20 +1509,20 @@ export default class AngieBarExtension extends Extension {
 
         // 1. Impostazioni
         let settingsItem = new PopupMenu.PopupMenuItem('Impostazioni');
-        settingsItem.connect('activate', () => {
+        this._connect(settingsItem, 'activate', () => {
             GLib.spawn_command_line_async('gnome-control-center');
         });
         this._logoMenu.addMenuItem(settingsItem);
 
         // 2. File (Submenu with folders)
         let fileSubMenu = new PopupMenu.PopupSubMenuMenuItem('File');
-        let foldersStr = this._settings.get_string('logo-menu-folders');
+        let foldersStr = this._settings ? this._settings.get_string('logo-menu-folders') : '';
         let folders = foldersStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
         
         folders.forEach(folder => {
             let label = folder.split('/').pop() || folder;
             let folderItem = new PopupMenu.PopupMenuItem(label);
-            folderItem.connect('activate', () => {
+            this._connect(folderItem, 'activate', () => {
                 let expandedPath = folder.startsWith('~/') ? folder.replace('~', GLib.get_home_dir()) : folder;
                 try {
                     let file = Gio.File.new_for_path(expandedPath);
@@ -1431,7 +1544,7 @@ export default class AngieBarExtension extends Extension {
 
         // 3. Terminale
         let termItem = new PopupMenu.PopupMenuItem('Terminale');
-        termItem.connect('activate', () => {
+        this._connect(termItem, 'activate', () => {
             GLib.spawn_command_line_async('ptyxis');
         });
         this._logoMenu.addMenuItem(termItem);
@@ -1449,7 +1562,7 @@ export default class AngieBarExtension extends Extension {
                 if (open && this._uptimeItem) {
                     this._execCommandAsync('uptime -p').then(out => {
                         let uptime = out.trim().replace('up ', '');
-                        if (uptime) {
+                        if (uptime && this._uptimeItem && this._uptimeItem.label) {
                             this._uptimeItem.label.set_text(`Uptime: ${uptime}`);
                         }
                     });
