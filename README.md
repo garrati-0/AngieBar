@@ -100,7 +100,7 @@ chmod +x install.sh
 
 ## 📋 Requirements
 
-- **GNOME Shell**: 45 to 50
+- **GNOME Shell**: 45 to 51
 - **System Dependencies**:
   - `libadwaita` (for preferences window)
   - `network-manager` (for Wi-Fi SSID & IP info)
