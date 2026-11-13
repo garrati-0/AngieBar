@@ -88,7 +88,7 @@
       <summary>Action for logo left click (0 = command, 1 = menu)</summary>
     </key>
     <key name="logo-menu-folders" type="s">
-      <default>'~/Documenti,~/Scaricati,~/Scrivania,~/Immagini'</default>
+      <default>'~/Documents,~/Downloads,~/Desktop,~/Pictures'</default>
       <summary>Comma separated list of absolute paths for the file menu</summary>
     </key>
 
