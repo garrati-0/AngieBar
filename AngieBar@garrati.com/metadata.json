@@ -1,16 +1,17 @@
 {
     "uuid": "AngieBar@garrati.com",
     "name": "AngieBar",
-    "description": "Custom GNOME bar with island design, CPU, RAM, network monitors, and todo list",
+    "description": "Custom GNOME bar with island design, media player, notifications, calendar, todo list, clipboard, pomodoro, AI assistant, and system monitors",
     "shell-version": [
         "45",
         "46",
         "47",
         "48",
         "49",
-        "50"
+        "50",
+        "51"
     ],
-    "version": 5,
+    "version": 6,
     "url": "https://github.com/garrati-0/AngieBar",
     "settings-schema": "org.gnome.shell.extensions.AngieBar"
 }
