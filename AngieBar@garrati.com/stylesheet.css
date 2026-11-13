@@ -44,7 +44,7 @@ StButton.custom-island:hover {
     box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.45);
 }
 
-/* Isola Power */
+/* Power Island */
 .power-island {
     padding: 0px 12px;
     margin-left: 6px;
@@ -55,13 +55,13 @@ StButton.custom-island:hover {
 .power-icon {
     icon-size: 18px;
     color: #f38ba8;
-    /* Rosso Catppuccin più acceso */
+    /* Brighter Catppuccin Red */
     transition-duration: 250ms;
 }
 
 .power-island:hover .power-icon {
     color: #ff9fb4;
-    /* Schiarisce al passaggio del mouse */
+    /* Lightens on hover */
 }
 
 /* Logo Island */
@@ -79,18 +79,18 @@ StButton.custom-island:hover {
 .logo-island:hover {
     background-color: #f8f9fa;
     border-color: #cba6f7;
-    /* Tocco di viola sull'hover */
+    /* Touch of purple on hover */
     box-shadow: 0px 4px 16px rgba(203, 166, 247, 0.3);
 }
 
-/* SVG logo: scalatura vettoriale centrata */
+/* SVG logo: centered vector scaling */
 .logo-icon {
     icon-size: 18px;
     color: #cdd6f4;
 }
 
 /* =========================================
-   3. ISOLA DESTRA E CONTROLLI RAPIDI
+   3. RIGHT ISLAND AND QUICK SETTINGS
    ========================================= */
 .right-island {
     padding: 0px 4px;
@@ -105,7 +105,7 @@ StButton.custom-island:hover {
 
 .right-island-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    /* Hover più visibile */
+    /* More visible hover */
 }
 
 .qs-box {
@@ -116,7 +116,7 @@ StButton.custom-island:hover {
     spacing: 8px;
 }
 
-/* Icone di Sistema */
+/* System Icons */
 .system-icon {
     icon-size: 16px;
     color: #bac2de;
@@ -134,13 +134,13 @@ StButton.custom-island:hover {
 
 .island-separator {
     color: rgba(171, 178, 191, 0.3);
-    /* Separatore più discreto */
+    /* More subtle separator */
     font-weight: 300;
     font-size: 16px;
     margin: 0 4px;
 }
 
-/* Testi Generici */
+/* Generic Text */
 .custom-island StLabel {
     color: #cdd6f4;
     font-family: 'JetBrains Mono', monospace;
@@ -149,7 +149,7 @@ StButton.custom-island:hover {
     y_align: center;
 }
 
-/* Batteria */
+/* Battery */
 .battery-label {
     color: #cdd6f4;
 }
@@ -165,7 +165,7 @@ StButton.custom-island:hover {
 }
 
 /* =========================================
-   4. MODULI STATISTICHE (CPU, RAM, RETE)
+   4. STATS MODULES (CPU, RAM, NETWORK)
    ========================================= */
 .cpu-island,
 .ram-island {
@@ -242,7 +242,7 @@ StButton.custom-island:hover {
 
 
 /* =========================================
-   5. WORKSPACES (Pillole e Indicatori)
+   5. WORKSPACES (Pills and Indicators)
    ========================================= */
 .workspaces-island {
     padding: 0px 12px;
@@ -254,7 +254,7 @@ StButton.custom-island:hover {
     transition-duration: 300ms;
 }
 
-/* Pallino Inattivo */
+/* Inactive Dot */
 .workspace-dot.inactive {
     width: 10px;
     height: 10px;
@@ -267,17 +267,17 @@ StButton.custom-island:hover {
     opacity: 0.9;
     background-color: #cdd6f4;
     transform: scale(1.1);
-    /* Effetto pop al passaggio */
+    /* Pop effect on hover */
 }
 
-/* Pillola Attiva */
+/* Active Pill */
 .workspace-dot.active {
     width: 36px;
     height: 14px;
     border-radius: 7px;
     background-color: #cba6f7;
     box-shadow: 0px 0px 8px rgba(203, 166, 247, 0.4);
-    /* Glow sulla pillola attiva */
+    /* Glow on the active pill */
 }
 
 .workspace-dot-inner {
@@ -368,12 +368,12 @@ StButton.custom-island:hover {
 
 .mic-box .privacy-icon {
     color: #f38ba8 !important;
-    /* Rosso */
+    /* Red */
 }
 
 .cam-box .privacy-icon {
     color: #f9e2af !important;
-    /* Giallo */
+    /* Yellow */
 }
 
 .privacy-icon {
@@ -538,7 +538,7 @@ StButton.custom-island:hover {
     padding: 2px 0px 0px 0px;
 }
 
-/* ── Page 1: Musica (Android 17 / Pixel Media Card + Multi-Stream Slices) ── */
+/* ── Page 1: Music (Android 17 / Pixel Media Card + Multi-Stream Slices) ── */
 .di-music-page {
     padding: 0;
     spacing: 8px;

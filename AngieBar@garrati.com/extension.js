@@ -81,17 +81,17 @@ export default class AngieBarExtension extends Extension {
             });
         });
 
-        // --- 1. NASCONDIAMO GLI ELEMENTI ORIGINALI ---
+        // --- 1. HIDE ORIGINAL PANEL ELEMENTS ---
         Main.panel._leftBox.get_children().forEach(c => c.hide());
         Main.panel.statusArea.dateMenu.hide();
         Main.panel.statusArea.quickSettings.hide();
 
         Main.panel.add_style_class_name('transparent-panel');
 
-        // Variabili di stato per evitare aggiornamenti UI inutili
+        // State variables to avoid unnecessary UI updates
         this._isCheckingSysIcons = false;
 
-        // --- 2. MODULO CENTRALE: ISOLA OROLOGIO ---
+        // --- 2. CENTER MODULE: CLOCK ISLAND ---
         this._centerIsland = new St.Button({
             style_class: 'custom-island',
             y_align: Clutter.ActorAlign.CENTER,
@@ -136,7 +136,7 @@ export default class AngieBarExtension extends Extension {
 
         Main.panel._centerBox.add_child(this._centerIsland);
 
-        // --- 3. MODULO DESTRO: ISOLA CONTROLLI RAPIDI ---
+        // --- 3. RIGHT MODULE: QUICK SETTINGS ISLAND ---
         this._rightIsland = new St.BoxLayout({
             style_class: 'custom-island right-island',
             y_align: Clutter.ActorAlign.CENTER
@@ -193,7 +193,7 @@ export default class AngieBarExtension extends Extension {
 
         this._separator = new St.Label({ text: '|', style_class: 'island-separator', y_align: Clutter.ActorAlign.CENTER });
 
-        // --- 3.C Sezione Destra (Batteria) ---
+        // --- 3.C Right Section (Battery) ---
         this._batteryBtn = new St.Button({
             style_class: 'right-island-btn',
             reactive: true, track_hover: true, can_focus: true,
@@ -242,7 +242,7 @@ export default class AngieBarExtension extends Extension {
             return Clutter.EVENT_PROPAGATE;
         });
 
-        // --- 3.D MODULO POWER ---
+        // --- 3.D POWER MODULE ---
         this._powerIsland = new St.Button({
             style_class: 'custom-island power-island',
             y_align: Clutter.ActorAlign.CENTER,
@@ -267,7 +267,7 @@ export default class AngieBarExtension extends Extension {
         this._rightIsland.add_child(this._separator);
         this._rightIsland.add_child(this._batteryBtn);
 
-        // --- 3.E MODULO LOGO ---
+        // --- 3.E LOGO MODULE ---
         this._logoIsland = new St.Bin({
             style_class: 'logo-island',
             y_align: Clutter.ActorAlign.CENTER,
@@ -303,7 +303,7 @@ export default class AngieBarExtension extends Extension {
             return Clutter.EVENT_STOP;
         });
 
-        // --- 3.G MODULI CPU E RAM ---
+        // --- 3.G CPU AND RAM MODULES ---
         this._cpuIsland = new St.BoxLayout({ style_class: 'custom-island cpu-island', y_align: Clutter.ActorAlign.CENTER });
         this._cpuIcon = new St.Icon({ gicon: Gio.Icon.new_for_string(`${this.path}/cpu-custom-symbolic.svg`), style_class: 'stats-icon cpu-icon' });
         this._cpuLabel = new St.Label({ text: '0.0%', style_class: 'stats-label cpu-label', y_align: Clutter.ActorAlign.CENTER });
@@ -345,7 +345,7 @@ export default class AngieBarExtension extends Extension {
         this._prevCpuTotal = 0;
         this._prevCpuIdle = 0;
 
-        // --- 3.H MODULO VELOCITÀ RETE ---
+        // --- 3.H NETWORK SPEED MODULE ---
         this._netIsland = new St.Button({
             style_class: 'custom-island net-island',
             y_align: Clutter.ActorAlign.CENTER,
@@ -386,7 +386,7 @@ export default class AngieBarExtension extends Extension {
         this._prevNetRx = 0;
         this._prevNetTx = 0;
 
-        // --- 3.I MODULO TODO ---
+        // --- 3.I TODO MODULE ---
         this._todoIsland = new St.Button({
             style_class: 'custom-island todo-island',
             y_align: Clutter.ActorAlign.CENTER,
@@ -426,7 +426,7 @@ export default class AngieBarExtension extends Extension {
         this._tooltip.add_child(this._tooltipLabel);
         Main.layoutManager.addTopChrome(this._tooltip);
 
-        // --- 3.F MODULO WORKSPACES ---
+        // --- 3.F WORKSPACES MODULE ---
         this._wsManager = global.workspace_manager;
         this._wsSignals = [];
         this._workspacesIsland = new St.BoxLayout({ style_class: 'custom-island workspaces-island', y_align: Clutter.ActorAlign.CENTER });
@@ -435,7 +435,7 @@ export default class AngieBarExtension extends Extension {
         this._wsSignals.push(this._wsManager.connect('workspace-switched', this._updateWorkspaces.bind(this)));
         this._updateWorkspaces();
 
-        // --- 3.P MODULO PRIVACY ---
+        // --- 3.P PRIVACY MODULE ---
         this._privacyIsland = new St.BoxLayout({
             style_class: 'custom-island privacy-island',
             y_align: Clutter.ActorAlign.CENTER,
@@ -475,7 +475,7 @@ export default class AngieBarExtension extends Extension {
             return Clutter.EVENT_PROPAGATE;
         });
 
-        // ASSEMBLAGGIO PANNELLO
+        // PANEL ASSEMBLY
         Main.panel._leftBox.add_style_class_name('waybar-left-box');
         Main.panel._leftBox.add_child(this._logoIsland);
         Main.panel._leftBox.add_child(this._workspacesIsland);
@@ -1054,7 +1054,7 @@ export default class AngieBarExtension extends Extension {
         this._wsManager = null;
         this._dbus = null;
 
-        // --- RIPRISTINO DEI MENU DI SISTEMA (FONDAMENTALE) ---
+        // --- RESTORE SYSTEM MENUS (CRITICAL) ---
         let dateMenu = Main.panel.statusArea.dateMenu;
         if (dateMenu && dateMenu.menu && dateMenu.menu.sourceActor === this._centerIsland) {
             dateMenu.menu.sourceActor = dateMenu;
@@ -1633,7 +1633,7 @@ export default class AngieBarExtension extends Extension {
 
     _updateTodoUI() {
         const hidden = this._getHiddenTodoTopicsSet();
-        const todos = (this._todos || []).filter(t => !hidden.has(t.topic || 'Generale'));
+        const todos = (this._todos || []).filter(t => !hidden.has(t.topic || 'General'));
         const doneCount = todos.filter(t => t.done).length;
         if (this._todoLabel) {
             this._todoLabel.set_text(`${todos.length - doneCount}/${todos.length}`);
@@ -1644,7 +1644,7 @@ export default class AngieBarExtension extends Extension {
     _getGoogleAccessTokenAsync() {
         return new Promise((resolve) => {
             if (!this._dbus) {
-                resolve({ ok: false, error: 'D-Bus non disponibile' });
+                resolve({ ok: false, error: 'D-Bus unavailable' });
                 return;
             }
             this._dbus.call(
@@ -1675,7 +1675,7 @@ export default class AngieBarExtension extends Extension {
                             }
                         }
                         if (!googlePath) {
-                            resolve({ ok: false, error: 'Nessun account Google in Account Online' });
+                            resolve({ ok: false, error: 'No Google account in Online Accounts' });
                             return;
                         }
                         conn.call(
@@ -1695,7 +1695,7 @@ export default class AngieBarExtension extends Extension {
                                     if (accessToken) {
                                         resolve({ ok: true, token: accessToken, email });
                                     } else {
-                                        resolve({ ok: false, email, attentionNeeded: true, error: 'Token vuoto' });
+                                        resolve({ ok: false, email, attentionNeeded: true, error: 'Empty token' });
                                     }
                                 } catch (err2) {
                                     resolve({ ok: false, email, attentionNeeded: true, error: String(err2.message || err2) });
@@ -1703,7 +1703,7 @@ export default class AngieBarExtension extends Extension {
                             }
                         );
                     } catch (err) {
-                        resolve({ ok: false, error: 'Servizio GNOME Online Accounts non raggiungibile' });
+                        resolve({ ok: false, error: 'GNOME Online Accounts service unreachable' });
                     }
                 }
             );
@@ -1719,8 +1719,8 @@ export default class AngieBarExtension extends Extension {
                     if (!auth.ok) {
                         this._googleNeedsReauth = Boolean(auth.attentionNeeded);
                         this._googleSyncStatus = auth.attentionNeeded
-                            ? `Riautentica ${auth.email || 'Google'} in Impostazioni → Account online`
-                            : (auth.error || 'Errore autenticazione Google');
+                            ? `Re-authenticate ${auth.email || 'Google'} in Settings → Online Accounts`
+                            : (auth.error || 'Google authentication error');
                         resolve(null);
                         return;
                     }
@@ -1766,8 +1766,8 @@ export default class AngieBarExtension extends Extension {
             if (!auth.ok) {
                 this._googleNeedsReauth = Boolean(auth.attentionNeeded);
                 this._googleSyncStatus = auth.attentionNeeded
-                    ? `Riautentica ${auth.email || 'Google'} in Account Online`
-                    : (auth.error || 'Account Google non collegato');
+                    ? `Re-authenticate ${auth.email || 'Google'} in Online Accounts`
+                    : (auth.error || 'Google account not linked');
                 this._updateTodoUI();
                 return false;
             }
@@ -1775,7 +1775,7 @@ export default class AngieBarExtension extends Extension {
             const token = auth.token;
             const listsRes = await this._googleTasksRequestAsync('GET', '/users/@me/lists?maxResults=100', null, token);
             if (!listsRes || listsRes.error || !Array.isArray(listsRes.items)) {
-                this._googleSyncStatus = listsRes?.error?.message || 'Errore lettura elenchi Google Tasks';
+                this._googleSyncStatus = listsRes?.error?.message || 'Error reading Google Tasks lists';
                 this._updateTodoUI();
                 return false;
             }
@@ -1796,7 +1796,7 @@ export default class AngieBarExtension extends Extension {
                     // Deleted on Google Tasks
                     delete this._todoGoogleLists[localTopic];
                     this._todoTopics = this._todoTopics.filter(t => t !== localTopic);
-                    this._todos = (this._todos || []).filter(t => (t.topic || 'Generale') !== localTopic);
+                    this._todos = (this._todos || []).filter(t => (t.topic || 'General') !== localTopic);
                 } else {
                     const remoteTitle = remoteById.get(gId);
                     if (remoteTitle && remoteTitle !== localTopic) {
@@ -1809,7 +1809,7 @@ export default class AngieBarExtension extends Extension {
                             delete this._todoTopicColors[localTopic];
                         }
                         (this._todos || []).forEach(t => {
-                            if ((t.topic || 'Generale') === localTopic) t.topic = remoteTitle;
+                            if ((t.topic || 'General') === localTopic) t.topic = remoteTitle;
                         });
                     }
                 }
@@ -1817,7 +1817,7 @@ export default class AngieBarExtension extends Extension {
 
             // 2. Add all remote lists from Google Tasks
             for (const rList of remoteLists) {
-                const title = (rList.title || 'Attività').trim();
+                const title = (rList.title || 'Tasks').trim();
                 if (!this._todoTopics.includes(title)) {
                     this._todoTopics.push(title);
                 }
@@ -1838,7 +1838,7 @@ export default class AngieBarExtension extends Extension {
             const newAllTodos = [];
             for (const topic of this._todoTopics) {
                 const listId = this._todoGoogleLists[topic];
-                const localTasks = (this._todos || []).filter(t => (t.topic || 'Generale') === topic);
+                const localTasks = (this._todos || []).filter(t => (t.topic || 'General') === topic);
                 if (!listId) {
                     newAllTodos.push(...localTasks);
                     continue;
@@ -1882,12 +1882,12 @@ export default class AngieBarExtension extends Extension {
             }
 
             this._todos = newAllTodos;
-            this._googleSyncStatus = `Sincronizzato con ${auth.email}`;
+            this._googleSyncStatus = `Synced with ${auth.email}`;
             await this._saveTodos();
             this._updateTodoUI();
             return true;
         } catch (e) {
-            this._googleSyncStatus = 'Errore sincronizzazione Google Tasks';
+            this._googleSyncStatus = 'Google Tasks sync error';
             this._updateTodoUI();
             return false;
         } finally {
@@ -1913,7 +1913,7 @@ export default class AngieBarExtension extends Extension {
 
     async createGoogleTaskAsync(task) {
         if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
-        const topic = task.topic || 'Generale';
+        const topic = task.topic || 'General';
         if (!this._todoGoogleLists) this._todoGoogleLists = {};
         let listId = this._todoGoogleLists[topic];
         if (!listId) {
@@ -1937,7 +1937,7 @@ export default class AngieBarExtension extends Extension {
 
     async updateGoogleTaskAsync(task) {
         if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
-        const topic = task.topic || 'Generale';
+        const topic = task.topic || 'General';
         const listId = this._todoGoogleLists?.[topic];
         if (!listId || !task.googleId) return;
         await this._googleTasksRequestAsync(
@@ -1953,7 +1953,7 @@ export default class AngieBarExtension extends Extension {
 
     async deleteGoogleTaskAsync(topic, googleId) {
         if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
-        const listId = this._todoGoogleLists?.[topic || 'Generale'];
+        const listId = this._todoGoogleLists?.[topic || 'General'];
         if (!listId || !googleId) return;
         await this._googleTasksRequestAsync(
             'DELETE',
@@ -1963,7 +1963,7 @@ export default class AngieBarExtension extends Extension {
 
     async clearCompletedGoogleTasksAsync(topic) {
         if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
-        const listId = this._todoGoogleLists?.[topic || 'Generale'];
+        const listId = this._todoGoogleLists?.[topic || 'General'];
         if (!listId) return;
         await this._googleTasksRequestAsync('POST', `/lists/${encodeURIComponent(listId)}/clear`);
     }
@@ -1972,15 +1972,15 @@ export default class AngieBarExtension extends Extension {
         if (!this._logoMenu) return;
         this._logoMenu.removeAll();
 
-        // 0. Impostazioni AngieBar & Dynamic Island
-        let angiePrefsItem = new PopupMenu.PopupMenuItem('Impostazioni AngieBar');
+        // 0. AngieBar Settings & Dynamic Island
+        let angiePrefsItem = new PopupMenu.PopupMenuItem('AngieBar Settings');
         this._connect(angiePrefsItem, 'activate', () => {
             try { this.openPreferences(); } catch (e) {}
         });
         this._logoMenu.addMenuItem(angiePrefsItem);
 
-        // 1. Impostazioni di Sistema
-        let settingsItem = new PopupMenu.PopupMenuItem('Impostazioni di Sistema');
+        // 1. System Settings
+        let settingsItem = new PopupMenu.PopupMenuItem('System Settings');
         this._connect(settingsItem, 'activate', () => {
             GLib.spawn_command_line_async('gnome-control-center');
         });
@@ -2007,15 +2007,15 @@ export default class AngieBarExtension extends Extension {
         });
         
         if (folders.length === 0) {
-            let emptyItem = new PopupMenu.PopupMenuItem('Nessuna cartella configurata');
+            let emptyItem = new PopupMenu.PopupMenuItem('No folders configured');
             emptyItem.reactive = false;
             fileSubMenu.menu.addMenuItem(emptyItem);
         }
         
         this._logoMenu.addMenuItem(fileSubMenu);
 
-        // 3. Terminale
-        let termItem = new PopupMenu.PopupMenuItem('Terminale');
+        // 3. Terminal
+        let termItem = new PopupMenu.PopupMenuItem('Terminal');
         this._connect(termItem, 'activate', () => {
             GLib.spawn_command_line_async('ptyxis');
         });

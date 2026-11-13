@@ -10,12 +10,12 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Volume from 'resource:///org/gnome/shell/ui/status/volume.js';
 
 const TABS = [
-    { id: 'notifications', label: 'Notifiche',  icon: 'angie-bell-symbolic.svg' },
-    { id: 'music',         label: 'Musica',     icon: 'angie-music-symbolic.svg' },
-    { id: 'calendar',      label: 'Calendario', icon: 'angie-calendar-symbolic.svg' },
-    { id: 'todo',          label: 'To-Do',      icon: 'angie-todo-symbolic.svg' },
-    { id: 'pomodoro',      label: 'Pomodoro',   icon: 'angie-timer-symbolic.svg' },
-    { id: 'clipboard',     label: 'Clipboard',  icon: 'angie-clipboard-symbolic.svg' },
+    { id: 'notifications', label: 'Notifications', icon: 'angie-bell-symbolic.svg' },
+    { id: 'music',         label: 'Music',         icon: 'angie-music-symbolic.svg' },
+    { id: 'calendar',      label: 'Calendar',      icon: 'angie-calendar-symbolic.svg' },
+    { id: 'todo',          label: 'To-Do',         icon: 'angie-todo-symbolic.svg' },
+    { id: 'pomodoro',      label: 'Pomodoro',      icon: 'angie-timer-symbolic.svg' },
+    { id: 'clipboard',     label: 'Clipboard',     icon: 'angie-clipboard-symbolic.svg' },
 ];
 
 // Optional fallback map to stock GNOME symbolic icon names if a custom SVG is missing
@@ -67,10 +67,10 @@ function lighten(hex, f) {
     return `#${[r, g, b].map(c => c.toString(16).padStart(2, '0')).join('')}`;
 }
 
-const WEEKDAYS_IT = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
-const MONTHS_IT = [
-    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const MONTHS = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
 export class DynamicIslandManager {
@@ -96,8 +96,8 @@ export class DynamicIslandManager {
         this._selectedPlayerName = null;
         this._currentTrack = {
             playing: false,
-            title: 'Nessun brano in riproduzione',
-            artist: 'Avvia Spotify o un lettore multimediale',
+            title: 'Nothing playing',
+            artist: 'Start Spotify or a media player',
             artUrl: null,
             artPath: null,
             lengthUs: 0,
@@ -1075,7 +1075,7 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._playerBadgeLabel = new St.Label({
-            text: 'Altoparlanti',
+            text: 'Speakers',
             style_class: 'di-music-player-label',
             y_align: Clutter.ActorAlign.CENTER,
         });
@@ -1109,13 +1109,13 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._musicTitle = new St.Label({
-            text: 'Nessun brano in riproduzione',
+            text: 'Nothing playing',
             style_class: 'di-music-title',
         });
         this._musicTitle.clutter_text.ellipsize = Pango.EllipsizeMode.END;
 
         this._musicArtist = new St.Label({
-            text: 'Avvia un player multimediale',
+            text: 'Start a media player',
             style_class: 'di-music-artist',
         });
         this._musicArtist.clutter_text.ellipsize = Pango.EllipsizeMode.END;
@@ -1259,7 +1259,7 @@ export class DynamicIslandManager {
         this._musicMainContent.add_child(botRow);
         this._musicScrim.add_child(this._musicMainContent);
 
-        // Inline Audio Output Device Picker (Altoparlanti, HDMI, Cuffie/Bluetooth)
+        // Inline Audio Output Device Picker (Speakers, HDMI, Headphones/Bluetooth)
         this._outputPickerOpen = false;
         this._outputPickerScroll = new St.ScrollView({
             style_class: 'di-output-scroll',
@@ -1452,8 +1452,8 @@ export class DynamicIslandManager {
             this._currentTrack = {
                 playing: false,
                 hasMedia: false,
-                title: 'Nessun brano in riproduzione',
-                artist: 'Avvia un player multimediale',
+                title: 'Nothing playing',
+                artist: 'Start a media player',
                 artUrl: null,
                 artPath: null,
                 lengthUs: 0,
@@ -1488,8 +1488,8 @@ export class DynamicIslandManager {
         this._currentTrack = {
             playing: chosen.status === 'Playing',
             hasMedia,
-            title: chosen.title || 'Nessun brano in riproduzione',
-            artist: chosen.artist || (chosen.rawTitle ? 'Artista sconosciuto' : 'In attesa di riproduzione'),
+            title: chosen.title || 'Nothing playing',
+            artist: chosen.artist || (chosen.rawTitle ? 'Unknown artist' : 'Waiting for playback'),
             artPath: chosen.artPath || null,
             lengthUs: chosen.lengthUs || 0,
             positionUs: Math.max(0, posUs),
@@ -1760,14 +1760,14 @@ export class DynamicIslandManager {
         }
         if (lower.includes('speaker') || lower.includes('altoparlant')) {
             return {
-                shortLabel: 'Altoparlanti',
-                fullLabel: 'Altoparlanti di sistema',
+                shortLabel: 'Speakers',
+                fullLabel: 'System Speakers',
                 iconName: 'audio-speakers-symbolic',
             };
         }
         if (lower.includes('headphone') || lower.includes('headset') || lower.includes('cuffie') || lower.includes('earbud') || lower.includes('airpods')) {
             return {
-                shortLabel: 'Cuffie',
+                shortLabel: 'Headphones',
                 fullLabel: clean,
                 iconName: 'audio-headphones-symbolic',
             };
@@ -1776,7 +1776,7 @@ export class DynamicIslandManager {
         const short = clean.length > 16 ? `${clean.slice(0, 15)}…` : (clean || 'Audio');
         return {
             shortLabel: short,
-            fullLabel: `${clean} (Cuffie / Audio)`,
+            fullLabel: `${clean} (Headphones / Audio)`,
             iconName: 'audio-headphones-symbolic',
         };
     }
@@ -2453,7 +2453,7 @@ export class DynamicIslandManager {
         if (!path || !GLib.file_test(path, GLib.FileTest.EXISTS)) return;
         const name = GLib.path_get_basename(path);
         const isDir = GLib.file_test(path, GLib.FileTest.IS_DIR);
-        let sizeStr = isDir ? 'Cartella' : 'File';
+        let sizeStr = isDir ? 'Folder' : 'File';
         try {
             if (!isDir) {
                 const info = Gio.File.new_for_path(path).query_info('standard::size', Gio.FileQueryInfoFlags.NONE, null);
@@ -2541,7 +2541,7 @@ export class DynamicIslandManager {
     async _promptAddFileToShelf() {
         try {
             const out = await this._ext._execCommandAsync(
-                'zenity --file-selection --multiple --separator="\\n" --title="Appoggia file nella Dynamic Island" 2>/dev/null'
+                'zenity --file-selection --multiple --separator="\\n" --title="Park file in the Dynamic Island" 2>/dev/null'
             );
             if (!out || !out.trim()) return;
             const paths = out.split('\n').map(s => s.trim()).filter(Boolean);
@@ -2559,7 +2559,7 @@ export class DynamicIslandManager {
                 const gnomePayload = `copy\n${uri}`;
                 const bytes = new GLib.Bytes(new TextEncoder().encode(gnomePayload));
                 clip.set_content(St.ClipboardType.CLIPBOARD, 'x-special/gnome-copied-files', bytes);
-                badge.set_text('Pronto (Ctrl+V) ✓');
+                badge.set_text('Ready (Ctrl+V) ✓');
                 badge.add_style_class_name('copied');
             } catch (e) {}
         } else if (item.kind === 'screenshot' && item.path) {
@@ -2572,12 +2572,12 @@ export class DynamicIslandManager {
                         clip.set_content(St.ClipboardType.CLIPBOARD, 'image/png', bytes);
                     } catch (e) {}
                 });
-                badge.set_text('Copiato ✓');
+                badge.set_text('Copied ✓');
                 badge.add_style_class_name('copied');
             } catch (e) {}
         } else {
             clip.set_text(St.ClipboardType.CLIPBOARD, item.text);
-            badge.set_text('Copiato ✓');
+            badge.set_text('Copied ✓');
             badge.add_style_class_name('copied');
         }
 
@@ -2617,7 +2617,7 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         }));
         this._clipSearchEntry = new St.Entry({
-            hint_text: 'Cerca o trascina qui un file...',
+            hint_text: 'Search or drop a file here...',
             style_class: 'di-search-entry',
             x_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
@@ -2629,13 +2629,13 @@ export class DynamicIslandManager {
         searchPill.add_child(this._clipSearchEntry);
         topBar.add_child(searchPill);
 
-        // Filter pills: Tutti | File | Screen | Fissati
+        // Filter pills: All | Files | Screenshots | Pinned
         this._clipFilterBtns = new Map();
         [
-            { id: 'all',         label: 'Tutti' },
-            { id: 'files',       label: 'File' },
-            { id: 'screenshots', label: 'Screen' },
-            { id: 'pinned',      label: 'Fissati' },
+            { id: 'all',         label: 'All' },
+            { id: 'files',       label: 'Files' },
+            { id: 'screenshots', label: 'Screenshots' },
+            { id: 'pinned',      label: 'Pinned' },
         ].forEach(f => {
             const btn = new St.Button({
                 label: f.label,
@@ -2690,7 +2690,7 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._clipDropBanner.add_child(new St.Label({
-            text: 'Rilascia qui per appoggiare il file nella Dynamic Island',
+            text: 'Drop here to park the file in the Dynamic Island',
             style_class: 'di-clip-drop-label',
             x_expand: true,
             x_align: Clutter.ActorAlign.CENTER,
@@ -2755,12 +2755,12 @@ export class DynamicIslandManager {
                 y_align: Clutter.ActorAlign.CENTER,
             });
             emptyBox.add_child(new St.Label({
-                text: this._clipQuery ? 'Nessun elemento trovato' : 'Appunti e Scaffale File vuoti',
+                text: this._clipQuery ? 'No items found' : 'Clipboard and file shelf are empty',
                 style_class: 'di-empty-title',
                 x_align: Clutter.ActorAlign.CENTER,
             }));
             emptyBox.add_child(new St.Label({
-                text: 'Trascina un file sull\'Island, fai uno screenshot o premi Ctrl+C',
+                text: 'Drop a file on the Island, take a screenshot, or press Ctrl+C',
                 style_class: 'di-empty-sub',
                 x_align: Clutter.ActorAlign.CENTER,
             }));
@@ -2785,12 +2785,12 @@ export class DynamicIslandManager {
 
             const typeMap = {
                 screenshot: 'Screenshot',
-                file: item.isDir ? 'Cartella' : 'File',
+                file: item.isDir ? 'Folder' : 'File',
                 link: 'Link',
-                code: 'Codice',
-                text: 'Testo',
+                code: 'Code',
+                text: 'Text',
             };
-            const typeText = typeMap[item.kind] || 'Testo';
+            const typeText = typeMap[item.kind] || 'Text';
             const badge = new St.Label({
                 text: typeText,
                 style_class: `di-clip-badge ${item.kind}`,
@@ -3158,7 +3158,7 @@ export class DynamicIslandManager {
             .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
             .replace(/\s+/g, ' ').trim();
 
-        this._notifIslandApp.text = (appName || 'NOTIFICA').toUpperCase();
+        this._notifIslandApp.text = (appName || 'NOTIFICATION').toUpperCase();
         this._notifIslandTitle.text = titleText || appName || '';
         this._notifIslandBody.text = bodyText;
         this._notifIslandBody.visible = bodyText.length > 0;
@@ -3388,7 +3388,7 @@ export class DynamicIslandManager {
 
         const topBar = new St.BoxLayout({ style_class: 'di-clip-topbar', x_expand: true });
         this._notifTitle = new St.Label({
-            text: 'Notifiche',
+            text: 'Notifications',
             style_class: 'di-notif-title',
             x_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
@@ -3397,7 +3397,7 @@ export class DynamicIslandManager {
 
         this._dndBtn = new St.Button({
             style_class: 'di-filter-pill',
-            label: 'Non disturbare',
+            label: 'Do not disturb',
             y_align: Clutter.ActorAlign.CENTER,
             reactive: true,
             track_hover: true,
@@ -3410,7 +3410,7 @@ export class DynamicIslandManager {
 
         const clearBtn = new St.Button({
             style_class: 'di-filter-pill',
-            label: 'Cancella tutto',
+            label: 'Clear all',
             y_align: Clutter.ActorAlign.CENTER,
             reactive: true,
             track_hover: true,
@@ -3440,7 +3440,7 @@ export class DynamicIslandManager {
     _refreshNotificationsUI() {
         if (!this._notifList) return;
         const items = this._getAllNotifications();
-        this._notifTitle.set_text(items.length ? `Notifiche · ${items.length}` : 'Notifiche');
+        this._notifTitle.set_text(items.length ? `Notifications · ${items.length}` : 'Notifications');
 
         const dnd = this._notifSettings ? !this._notifSettings.get_boolean('show-banners') : false;
         if (dnd) this._dndBtn.add_style_class_name('active');
@@ -3453,8 +3453,8 @@ export class DynamicIslandManager {
 
         if (items.length === 0) {
             const emptyBox = new St.BoxLayout({ style_class: 'di-empty-box', orientation: Clutter.Orientation.VERTICAL, x_expand: true, x_align: Clutter.ActorAlign.CENTER });
-            emptyBox.add_child(new St.Label({ text: 'Nessuna notifica', style_class: 'di-empty-title', x_align: Clutter.ActorAlign.CENTER }));
-            emptyBox.add_child(new St.Label({ text: dnd ? 'Non disturbare è attivo' : '', visible: dnd, style_class: 'di-empty-sub', x_align: Clutter.ActorAlign.CENTER }));
+            emptyBox.add_child(new St.Label({ text: 'No notifications', style_class: 'di-empty-title', x_align: Clutter.ActorAlign.CENTER }));
+            emptyBox.add_child(new St.Label({ text: dnd ? 'Do not disturb is active' : '', visible: dnd, style_class: 'di-empty-sub', x_align: Clutter.ActorAlign.CENTER }));
             this._notifList.add_child(emptyBox);
             return;
         }
@@ -3529,7 +3529,7 @@ export class DynamicIslandManager {
         topBar.add_child(this._todoBackBtn);
 
         this._todoTitleLabel = new St.Label({
-            text: 'Argomenti',
+            text: 'Topics',
             style_class: 'di-todo-topic-title',
             y_align: Clutter.ActorAlign.CENTER,
         });
@@ -3548,7 +3548,7 @@ export class DynamicIslandManager {
         });
         inputPill.add_child(this._todoEntryIcon);
         this._todoEntry = new St.Entry({
-            hint_text: 'Nuovo argomento...',
+            hint_text: 'New topic...',
             style_class: 'di-search-entry',
             x_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
@@ -3658,7 +3658,7 @@ export class DynamicIslandManager {
     }
 
     _todoTopicOf(task) {
-        return task.topic || 'Generale';
+        return task.topic || 'General';
     }
 
     _todoTopicsList() {
@@ -3755,12 +3755,12 @@ export class DynamicIslandManager {
             this._todoGoogleBanner.visible = showWarn;
             if (showWarn && this._todoGoogleBannerLabel) {
                 this._todoGoogleBannerLabel.set_text(
-                    this._ext._googleSyncStatus || 'Clicca qui per riautenticare Google Tasks in Account Online'
+                    this._ext._googleSyncStatus || 'Click here to re-authenticate Google Tasks in Online Accounts'
                 );
             }
         }
-        this._todoTitleLabel.set_text(inTopic ? this._todoTopic : 'Argomenti');
-        this._todoEntry.hint_text = inTopic ? 'Aggiungi un\'attività...' : 'Nuovo argomento...';
+        this._todoTitleLabel.set_text(inTopic ? this._todoTopic : 'Topics');
+        this._todoEntry.hint_text = inTopic ? 'Add a task...' : 'New topic...';
         this._todoEntryIcon.gicon = this._gicon(inTopic ? 'angie-todo-symbolic.svg' : 'angie-plus-symbolic.svg');
 
         if (!inTopic) {
@@ -3769,23 +3769,23 @@ export class DynamicIslandManager {
             this._todoCountLabel.set_text(`${totDone}/${visibleTodos.length}`);
             if (topics.length === 0) {
                 this._todoEmpty(
-                    allTopics.length > 0 ? 'Tutti gli elenchi sono nascosti' : 'Nessun argomento',
+                    allTopics.length > 0 ? 'All lists are hidden' : 'No topics',
                     allTopics.length > 0
-                        ? 'Puoi riattivarli dalle Impostazioni della Dynamic Island'
-                        : 'Scrivi sopra un nome e premi Invio per creare un argomento'
+                        ? 'You can re-enable them from the Dynamic Island settings'
+                        : 'Type a name above and press Enter to create a topic'
                 );
                 return;
             }
             const palette = [
-                '#3584e4', // Blu
-                '#2ec27e', // Verde
-                '#f5c211', // Giallo
-                '#ff7800', // Arancione
-                '#e01b24', // Rosso
-                '#9141ac', // Viola
-                '#d56199', // Rosa
-                '#00b4d8', // Ciano
-                '#9a9996', // Grigio
+                '#3584e4', // Blue
+                '#2ec27e', // Green
+                '#f5c211', // Yellow
+                '#ff7800', // Orange
+                '#e01b24', // Red
+                '#9141ac', // Purple
+                '#d56199', // Pink
+                '#00b4d8', // Cyan
+                '#9a9996', // Gray
             ];
             topics.forEach(topic => {
                 const items = allTodos.filter(t => this._todoTopicOf(t) === topic);
@@ -3824,7 +3824,7 @@ export class DynamicIslandManager {
                 name.clutter_text.ellipsize = Pango.EllipsizeMode.END;
                 body.add_child(name);
                 body.add_child(new St.Label({
-                    text: items.length ? `${pending} da fare · ${items.length}` : 'vuoto',
+                    text: items.length ? `${pending} to do · ${items.length}` : 'empty',
                     style_class: 'di-todo-topic-count',
                     y_align: Clutter.ActorAlign.CENTER,
                 }));
@@ -3897,7 +3897,7 @@ export class DynamicIslandManager {
         this._todoCountLabel.set_text(`${done}/${todos.length}`);
 
         if (todos.length === 0) {
-            this._todoEmpty('Nessuna attività', 'Scrivi sopra e premi Invio per aggiungerne una');
+            this._todoEmpty('No tasks', 'Type above and press Enter to add one');
             return;
         }
 
@@ -3989,8 +3989,8 @@ export class DynamicIslandManager {
         this._pomoPhaseBtns = new Map();
         [
             { id: 'focus',       label: 'Focus' },
-            { id: 'short_break', label: 'Pausa' },
-            { id: 'long_break',  label: 'Lunga' },
+            { id: 'short_break', label: 'Break' },
+            { id: 'long_break',  label: 'Long' },
         ].forEach(p => {
             const btn = new St.Button({
                 label: p.label,
@@ -4011,7 +4011,7 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         });
         steppersRow.add_child(this._buildPomoStepper('Focus', 'workMins', 5, 180, 5));
-        steppersRow.add_child(this._buildPomoStepper('Pausa', 'breakMins', 1, 60, 1));
+        steppersRow.add_child(this._buildPomoStepper('Break', 'breakMins', 1, 60, 1));
         topRow.add_child(steppersRow);
 
         card.add_child(topRow);
@@ -4042,12 +4042,12 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._pomoPhaseLabel = new St.Label({
-            text: 'Sessione Focus',
+            text: 'Focus Session',
             style_class: 'di-pomo-phase',
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._pomoSessionLabel = new St.Label({
-            text: '· 0 cicli',
+            text: '· 0 cycles',
             style_class: 'di-pomo-sessions',
             y_align: Clutter.ActorAlign.CENTER,
         });
@@ -4336,12 +4336,12 @@ export class DynamicIslandManager {
             const cycles = Math.max(1, this._pomo.cyclesBeforeLong || 4);
             const nextBreak = (this._pomo.sessions % cycles === 0) ? 'long_break' : 'short_break';
             const autoBreak = this._pomo.autoStartBreak !== false;
-            const label = nextBreak === 'long_break' ? 'Pausa Lunga' : 'Pausa';
+            const label = nextBreak === 'long_break' ? 'Long Break' : 'Break';
             Main.notify(
                 'AngieBar Pomodoro',
                 autoBreak
-                    ? `Tempo di studio completato! ${label} avviata automaticamente.`
-                    : `Tempo di studio completato! È ora di fare una ${label.toLowerCase()}.`
+                    ? `Focus time completed! ${label} started automatically.`
+                    : `Focus time completed! Time for a ${label.toLowerCase()}.`
             );
             this._setPomoPhase(nextBreak, autoBreak);
         } else {
@@ -4349,8 +4349,8 @@ export class DynamicIslandManager {
             Main.notify(
                 'AngieBar Pomodoro',
                 autoFocus
-                    ? 'Pausa terminata! Nuova sessione Focus avviata.'
-                    : 'Pausa terminata! Pronto per una nuova sessione Focus?'
+                    ? 'Break finished! A new Focus session has started.'
+                    : 'Break finished! Ready for a new Focus session?'
             );
             this._setPomoPhase('focus', autoFocus);
         }
@@ -4379,10 +4379,10 @@ export class DynamicIslandManager {
         if (this._pomoTimeLabel) this._pomoTimeLabel.set_text(timeStr);
         if (this._pomoPhaseLabel) {
             const phaseTxt = this._pomo.phase === 'focus'
-                ? 'Sessione Focus'
-                : (this._pomo.phase === 'short_break' ? 'Pausa Breve' : 'Pausa Lunga');
+                ? 'Focus Session'
+                : (this._pomo.phase === 'short_break' ? 'Short Break' : 'Long Break');
             this._pomoPhaseLabel.set_text(
-                this._pomo.running ? `${phaseTxt} · In corso` : phaseTxt
+                this._pomo.running ? `${phaseTxt} · Running` : phaseTxt
             );
             this._pomoPhaseLabel.set_style(isBreak ? `color: ${hex};` : null);
         }
@@ -4398,7 +4398,7 @@ export class DynamicIslandManager {
             this._pomoCard.set_style(isBreak ? `border: 1px solid rgba(${r}, ${g}, ${b}, 0.32);` : null);
         }
         if (this._pomoSessionLabel) {
-            this._pomoSessionLabel.set_text(`· ${this._pomo.sessions} cicli`);
+            this._pomoSessionLabel.set_text(`· ${this._pomo.sessions} cycles`);
         }
         if (this._pomoPhaseBtns) {
             this._pomoPhaseBtns.forEach((btn, id) => {
@@ -4541,7 +4541,7 @@ export class DynamicIslandManager {
         row.add_child(this._aiEntry);
 
         this._aiThinkLabel = new St.Label({
-            text: 'Solo un secondo…',
+            text: 'Just a second…',
             style_class: 'di-ai-think-label',
             x_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
@@ -4582,7 +4582,7 @@ export class DynamicIslandManager {
             x_expand: true,
             visible: false,
         });
-        this._aiPermTitle = new St.Label({ text: 'Posso procedere?', style_class: 'di-ai-perm-title' });
+        this._aiPermTitle = new St.Label({ text: 'May I proceed?', style_class: 'di-ai-perm-title' });
         this._aiPermTitle.clutter_text.line_wrap = true;
         this._aiPermBox.add_child(this._aiPermTitle);
         this._aiPermCmd = new St.Label({ text: '', style_class: 'di-ai-perm-cmd', reactive: true });
@@ -4592,9 +4592,9 @@ export class DynamicIslandManager {
             if (this._aiPermCmd.text) {
                 this._ownClipCopy = true;
                 St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, this._aiPermCmd.text);
-                this._updateAiStatusUI('Comando copiato ✓');
+                this._updateAiStatusUI('Command copied ✓');
                 GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1200, () => {
-                    this._updateAiStatusUI('Pronto');
+                    this._updateAiStatusUI('Ready');
                     return GLib.SOURCE_REMOVE;
                 });
             }
@@ -4602,8 +4602,8 @@ export class DynamicIslandManager {
         });
         this._aiPermBox.add_child(this._aiPermCmd);
         const permBtns = new St.BoxLayout({ style_class: 'di-ai-perm-btns', x_align: Clutter.ActorAlign.END });
-        const denyBtn = new St.Button({ label: 'Nega', style_class: 'di-ai-perm-btn deny', reactive: true, track_hover: true });
-        const allowBtn = new St.Button({ label: 'Consenti', style_class: 'di-ai-perm-btn allow', reactive: true, track_hover: true });
+        const denyBtn = new St.Button({ label: 'Deny', style_class: 'di-ai-perm-btn deny', reactive: true, track_hover: true });
+        const allowBtn = new St.Button({ label: 'Allow', style_class: 'di-ai-perm-btn allow', reactive: true, track_hover: true });
         this._ext._connect(denyBtn, 'clicked', () => this._resolveAiPermission(false));
         this._ext._connect(allowBtn, 'clicked', () => this._resolveAiPermission(true));
         permBtns.add_child(denyBtn);
@@ -4622,13 +4622,13 @@ export class DynamicIslandManager {
     _aiHintText() {
         const localModel = this._settings?.get_string('local-ai-model') || 'Locale';
         const names = {
-            agy: 'Chiedi ad AGY',
-            codex: 'Chiedi a Codex',
-            claude: 'Chiedi a Claude Code',
-            local: `Chiedi a ${localModel}`,
-            internal: 'Chiedi ad AngieBar',
+            agy: 'Ask AGY',
+            codex: 'Ask Codex',
+            claude: 'Ask Claude Code',
+            local: `Ask ${localModel}`,
+            internal: 'Ask AngieBar',
         };
-        return names[this._aiProvider] || 'Chiedi ad AngieBar';
+        return names[this._aiProvider] || 'Ask AngieBar';
     }
 
     _applyAiMode(on) {
@@ -4784,11 +4784,11 @@ export class DynamicIslandManager {
 
     _friendlyAiStatus(text) {
         const map = {
-            'Penso...': 'Solo un secondo…',
-            'AGY...': 'Chiedo ad AGY…',
-            'Claude...': 'Chiedo a Claude…',
-            'ChatGPT...': 'Chiedo a ChatGPT…',
-            'Codex...': 'Chiedo a Codex…',
+            'Thinking...': 'Just a second…',
+            'AGY...': 'Asking AGY…',
+            'Claude...': 'Asking Claude…',
+            'ChatGPT...': 'Asking ChatGPT…',
+            'Codex...': 'Asking Codex…',
         };
         return map[text] || text;
     }
@@ -4814,7 +4814,7 @@ export class DynamicIslandManager {
         }
         if (this._aiEntry) {
             const def = this._aiHintText();
-            const showTemp = text && !['Pronto', 'Penso...', 'Auto'].includes(text);
+            const showTemp = text && !['Ready', 'Thinking...', 'Auto'].includes(text);
             this._aiEntry.hint_text = showTemp ? this._friendlyAiStatus(text) : def;
             if (showTemp) {
                 this._clearTimer('_aiHintTimer');
@@ -4843,7 +4843,7 @@ export class DynamicIslandManager {
         if (this._aiNewBtn) this._aiNewBtn.visible = !thinking && this._aiMessages.length > 0;
 
         if (thinking) {
-            this._aiThinkLabel.text = 'Solo un secondo…';
+            this._aiThinkLabel.text = 'Just a second…';
             this._aiThinkLabel.opacity = 0;
             this._aiThinkLabel.translation_x = -6;
             this._aiThinkLabel.ease({ opacity: 255, translation_x: 0, duration: 220, mode: Clutter.AnimationMode.EASE_OUT_CUBIC });
@@ -4884,7 +4884,7 @@ export class DynamicIslandManager {
         }
         if (this._aiState !== 'thinking') return;
         this._aiState = 'idle';
-        if (!silent) this._appendAiMessage('ai', 'Interrotto.');
+        if (!silent) this._appendAiMessage('ai', 'Stopped.');
         this._setAiComposerMode('input');
     }
 
@@ -5073,9 +5073,9 @@ export class DynamicIslandManager {
                 this._ext._connect(bubble, 'button-press-event', () => {
                     this._ownClipCopy = true;
                     St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, msg.text);
-                    this._updateAiStatusUI('Copiato ✓');
+                    this._updateAiStatusUI('Copied ✓');
                     GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1200, () => {
-                        this._updateAiStatusUI('Pronto');
+                        this._updateAiStatusUI('Ready');
                         return GLib.SOURCE_REMOVE;
                     });
                     return Clutter.EVENT_STOP;
@@ -5109,7 +5109,7 @@ export class DynamicIslandManager {
                         header.add_child(langLbl);
 
                         const copyBtn = new St.Button({
-                            label: 'Copia',
+                            label: 'Copy',
                             style_class: 'di-ai-code-copy-btn',
                             reactive: true,
                             track_hover: true,
@@ -5119,13 +5119,13 @@ export class DynamicIslandManager {
                         const doCopy = () => {
                             this._ownClipCopy = true;
                             St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, seg.content);
-                            copyBtn.label = 'Copiato ✓';
+                            copyBtn.label = 'Copied ✓';
                             copyBtn.add_style_class_name('copied');
-                            this._updateAiStatusUI('Comando copiato ✓');
+                            this._updateAiStatusUI('Command copied ✓');
                             GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
-                                copyBtn.label = 'Copia';
+                                copyBtn.label = 'Copy';
                                 copyBtn.remove_style_class_name('copied');
-                                this._updateAiStatusUI('Pronto');
+                                this._updateAiStatusUI('Ready');
                                 return GLib.SOURCE_REMOVE;
                             });
                             return Clutter.EVENT_STOP;
@@ -5173,9 +5173,9 @@ export class DynamicIslandManager {
                 this._ext._connect(bubble, 'button-press-event', () => {
                     this._ownClipCopy = true;
                     St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, cleanedText);
-                    this._updateAiStatusUI('Risposta copiata ✓');
+                    this._updateAiStatusUI('Response copied ✓');
                     GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1200, () => {
-                        this._updateAiStatusUI('Pronto');
+                        this._updateAiStatusUI('Ready');
                         return GLib.SOURCE_REMOVE;
                     });
                     return Clutter.EVENT_STOP;
@@ -5213,7 +5213,7 @@ export class DynamicIslandManager {
 
     _appendAiMessage(role, text) {
         this._aiMessages.push({ role, text: text.trim(), animate: true });
-        this._updateAiStatusUI(role === 'ai' ? 'Pronto' : 'Penso...');
+        this._updateAiStatusUI(role === 'ai' ? 'Ready' : 'Thinking...');
         this._refreshAiChatUI();
     }
 
@@ -5299,15 +5299,15 @@ export class DynamicIslandManager {
 
     _agentSystemPrompt(prompt) {
         const home = GLib.get_home_dir();
-        return `Sei l'assistente AI compatto integrato nella Dynamic Island di GNOME Shell sul PC Linux dell'utente (cartella home: ${home}).\n` +
-            `REGOLA TASSATIVA DI BREVITÀ (PRIORITÀ ASSOLUTA):\n` +
-            `- Rispondi in italiano in modo ESTREMAMENTE CONCISO e DIRETTO: MASSIMO 2-3 FRASI IN TOTALE.\n` +
-            `- VIETATI i muri di testo, saggi, titoli multipli (###) o guide passo-passo.\n` +
-            `- Se mostri o suggerisci comandi bash, inseriscili in un blocco markdown: \`\`\`bash\n<comando>\n\`\`\`.\n` +
-            `- Per i percorsi di file o cartelle, usa solo testo semplice tra backtick (es. \`/home/utente/cartella\`). Mai link markdown con file://.\n` +
-            `- Quando l'utente chiede di fare qualcosa sul PC, eseguilo direttamente con i tuoi strumenti e conferma l'esito in 1 sola frase sintetica.\n` +
-            `Richiesta dell'utente: ${prompt}\n` +
-            `(ATTENZIONE: Massimo 2-3 frasi. Risposta brevissima).`;
+        return `You are the compact AI assistant built into the GNOME Shell Dynamic Island on the user's Linux PC (home folder: ${home}).\n` +
+            `STRICT BREVITY RULE (HIGHEST PRIORITY):\n` +
+            `- Answer in English in an EXTREMELY concise and DIRECT way: MAXIMUM 2-3 SENTENCES IN TOTAL.\n` +
+            `- FORBIDDEN: walls of text, essays, multiple headings (###) or step-by-step guides.\n` +
+            `- If you show or suggest bash commands, put them in a markdown block: \`\`\`bash\n<command>\n\`\`\`.\n` +
+            `- For file or folder paths, use only plain text between backticks (e.g. \`/home/user/folder\`). Never markdown links with file://.\n` +
+            `- When the user asks you to do something on the PC, run it directly with your tools and confirm the outcome in 1 concise sentence.\n` +
+            `User request: ${prompt}\n` +
+            `(NOTE: Maximum 2-3 sentences. Very short answer).`;
     }
 
     async _tryAgyBackend(prompt) {
@@ -5359,7 +5359,7 @@ export class DynamicIslandManager {
         const apiKey = GLib.getenv('OPENAI_API_KEY');
         if (apiKey) {
             this._updateAiStatusUI('ChatGPT...');
-            const sysMsg = 'Sei l\'assistente compatto di AngieBar sul PC dell\'utente. Rispondi in italiano in MASSIMO 2-3 FRASI (vietati muri di testo). Se serve eseguire un comando sul PC, rispondi SOLO con: CMD: <comando bash>.';
+            const sysMsg = 'You are the compact AngieBar assistant on the user\'s PC. Answer in English in MAXIMUM 2-3 SENTENCES (no walls of text). If you need to run a command on the PC, reply ONLY with: CMD: <bash command>.';
             const payload = JSON.stringify({
                 model: 'gpt-4o-mini',
                 messages: [
@@ -5382,7 +5382,7 @@ export class DynamicIslandManager {
                         if (content.startsWith('CMD:')) {
                             const cmd = content.slice(4).trim();
                             const cmdOut = await this._ext._execCommandAsync(`${cmd} 2>&1 | head -c 600`);
-                            return (cmdOut && cmdOut.trim()) ? `Eseguito (\`${cmd}\`):\n${cmdOut.trim()}` : `Comando eseguito: \`${cmd}\``;
+                            return (cmdOut && cmdOut.trim()) ? `Executed (\`${cmd}\`):\n${cmdOut.trim()}` : `Command executed: \`${cmd}\``;
                         }
                         return content;
                     }
@@ -5412,10 +5412,10 @@ export class DynamicIslandManager {
         return new Promise(resolve => {
             if (this._aiPermResolve) this._aiPermResolve(false);
             this._aiPermResolve = resolve;
-            this._aiPermTitle.text = title || 'Posso procedere?';
+            this._aiPermTitle.text = title || 'May I proceed?';
             this._aiPermCmd.text = detail || '';
             this._aiPermCmd.visible = Boolean(detail);
-            if (this._aiThinkLabel) this._aiThinkLabel.text = 'Serve il tuo permesso';
+            if (this._aiThinkLabel) this._aiThinkLabel.text = 'Your permission is required';
             const c = this._aiComposer;
             this._aiPermBox.visible = true;
             this._aiPermBox.opacity = 0;
@@ -5431,7 +5431,7 @@ export class DynamicIslandManager {
         const resolve = this._aiPermResolve;
         this._aiPermResolve = null;
         if (this._aiPermBox) this._aiPermBox.visible = false;
-        if (this._aiThinkLabel) this._aiThinkLabel.text = ok ? 'Eseguo…' : 'Annullato';
+        if (this._aiThinkLabel) this._aiThinkLabel.text = ok ? 'Running…' : 'Cancelled';
         const c = this._aiComposer;
         if (c && this._aiState === 'thinking') {
             c.remove_all_transitions();
@@ -5442,21 +5442,21 @@ export class DynamicIslandManager {
 
     _proposalPrompt(prompt) {
         const home = GLib.get_home_dir();
-        return `Sei l'assistente AI compatto integrato nella Dynamic Island di GNOME Shell sul PC Linux dell'utente (cartella home: ${home}).\n\n` +
-            `REGOLA TASSATIVA DI BREVITÀ (PRIORITÀ ASSOLUTA):\n` +
-            `- Rispondi in italiano in modo ESTREMAMENTE CONCISO, DIRETTO ed ESSENZIALE: MASSIMO 2-3 FRASI IN TOTALE.\n` +
-            `- L'utente ti legge all'interno di un piccolo widget sul desktop. I MURI DI TESTO, I SAGGI, LE GUIDE LUNGHE E LE LISTE TEORICHE SONO SEVERAMENTE VIETATI.\n` +
-            `- NON scrivere preamboli o saluti, NON elencare tutte le ipotetiche cause, NON usare titoli di sezione (###), NON scrivere tutorial o guide a tappe.\n` +
-            `- Vai subito al punto: se c'è un problema o una domanda tecnica, dai la risposta o la causa più probabile in 1 frase e indica subito l'azione o il comando esatto.\n\n` +
-            `REGOLA DEI PERMESSI E COMANDI:\n` +
-            `- Puoi accedere a qualsiasi file, cartella o comando sul PC (nessuna cartella esclusa), ma NON devi mai eseguire nulla da solo senza autorizzazione.\n` +
-            `- OGNI VOLTA che serve compiere o verificare qualcosa sul sistema (controllare processi, leggere file, installare o avviare app, testare errori):\n` +
-            `  Scrivi il comando su riga separata nel formato esatto: CMD: <comando bash>\n` +
-            `  (L'interfaccia chiederà all'utente l'autorizzazione Consenti/Nega prima di eseguirlo).\n` +
-            `- Se la risposta è puramente informativa da consultare, usa al massimo 2 frasi e inserisci il comando in: \`\`\`bash\n<comando>\n\`\`\`.\n` +
-            `- Per percorsi o file, usa solo backtick semplici (es. \`/home/utente/file\`). MAI link markdown [link](file://...) né schemi file://.\n\n` +
-            `Richiesta dell'utente: ${prompt}\n\n` +
-            `(ATTENZIONE: Rispetta tassativamente il limite di massimo 2-3 frasi. Niente risposte lunghe!).`;
+        return `You are the compact AI assistant built into the GNOME Shell Dynamic Island on the user's Linux PC (home folder: ${home}).\n\n` +
+            `STRICT BREVITY RULE (HIGHEST PRIORITY):\n` +
+            `- Answer in English in an EXTREMELY concise, DIRECT and to-the-point way: MAXIMUM 2-3 SENTENCES IN TOTAL.\n` +
+            `- The user reads you inside a small desktop widget. WALLS OF TEXT, ESSAYS, LONG GUIDES AND THEORETICAL LISTS ARE STRICTLY FORBIDDEN.\n` +
+            `- Do NOT write preambles or greetings, do NOT list all hypothetical causes, do NOT use section headings (###), do NOT write tutorials or step-by-step guides.\n` +
+            `- Get straight to the point: if there is a problem or a technical question, give the answer or the most likely cause in 1 sentence and immediately state the exact action or command.\n\n` +
+            `PERMISSIONS AND COMMANDS RULE:\n` +
+            `- You can access any file, folder or command on the PC (no folder excluded), but you must NEVER run anything by yourself without authorization.\n` +
+            `- EVERY TIME something needs to be done or verified on the system (checking processes, reading files, installing or launching apps, testing errors):\n` +
+            `  Write the command on a separate line in the exact format: CMD: <bash command>\n` +
+            `  (The interface will ask the user for Allow/Deny authorization before running it).\n` +
+            `- If the answer is purely informative, use at most 2 sentences and put the command in: \`\`\`bash\n<command>\n\`\`\`.\n` +
+            `- For paths or files, use only single backticks (e.g. \`/home/user/file\`). NEVER markdown links [link](file://...) or file:// schemes.\n\n` +
+            `User request: ${prompt}\n\n` +
+            `(NOTE: Strictly obey the maximum of 2-3 sentences. No long answers!).`;
     }
 
     _getAgySessionFile() {
@@ -5566,7 +5566,7 @@ export class DynamicIslandManager {
         const argv = this._agentArgv(provider, prompt, ask);
         if (!argv) {
             const bins = { agy: '`agy` (~/.gemini/bin/agy)', claude: '`claude` (Claude Code)', codex: '`codex` (OpenAI Codex CLI)' };
-            return `CLI ${bins[provider] || provider} non trovata. Installala o scegli un altro motore nelle impostazioni.`;
+            return `CLI ${bins[provider] || provider} not found. Install it or choose a different engine in the settings.`;
         }
         this._updateAiStatusUI(`${labels[provider] === 'AGY' ? 'AGY' : labels[provider]}...`);
         const { stdout, stderr } = await this._runAiSubprocess(argv, 90);
@@ -5587,8 +5587,8 @@ export class DynamicIslandManager {
         let out = this._cleanAiText(stdout || '');
         if (!out) {
             if (stderr === 'timeout' || (stderr && stderr.includes('timeout')))
-                return 'Tempo scaduto: l\'AI ha impiegato troppo tempo per rispondere.';
-            return `Nessuna risposta da ${labels[provider]}. Riprova tra poco.`;
+                return 'Timeout: the AI took too long to respond.';
+            return `No response from ${labels[provider]}. Try again shortly.`;
         }
 
         const cmds = [];
@@ -5603,10 +5603,10 @@ export class DynamicIslandManager {
         const results = [];
         for (const cmd of cmds) {
             if (gen !== this._aiGen) return null;
-            const ok = await this._aiConfirm(text || `${labels[provider]} vuole eseguire un comando sul PC:`, cmd);
+            const ok = await this._aiConfirm(text || `${labels[provider]} wants to run a command on your PC:`, cmd);
             if (gen !== this._aiGen) return null;
-            if (!ok) { results.push(`✕ Negato: \`${cmd}\``); continue; }
-            this._updateAiStatusUI('Eseguo…');
+            if (!ok) { results.push(`✕ Denied: \`${cmd}\``); continue; }
+            this._updateAiStatusUI('Running…');
             const r = await this._runAiSubprocess(['bash', '-lc', cmd], 120);
             const o = ((r.stdout || '') + (r.stderr && r.stderr !== 'timeout' ? `\n${r.stderr}` : '')).trim();
             results.push(`✓ \`${cmd}\`${o ? `\n${o.slice(0, 500)}` : ''}`);
@@ -5620,16 +5620,16 @@ export class DynamicIslandManager {
         const engine = this._settings?.get_string('local-ai-engine') || 'ollama';
         const unloadAfterUse = this._settings ? this._settings.get_boolean('local-ai-unload-after-use') : true;
 
-        this._updateAiStatusUI(`Carico ${model}…`);
+        this._updateAiStatusUI(`Loading ${model}…`);
 
         const home = GLib.get_home_dir();
         const sysMsg =
-            `Sei l'assistente AI compatto integrato nella Dynamic Island di GNOME Shell sul PC Linux dell'utente (cartella home: ${home}).\n` +
-            `REGOLA TASSATIVA DI BREVITÀ: Rispondi in italiano in modo ESTREMAMENTE CONCISO: MASSIMO 2-3 FRASI in totale. VIETATI assolutamente muri di testo, elenchi infiniti o guide lunghe.\n` +
-            `Se per soddisfare la richiesta serve compiere o verificare qualcosa sul PC, non eseguire nulla direttamente: descrivi in 1 frase cosa vuoi fare e scrivi OGNI comando bash su una riga separata nel formato esatto: CMD: <comando bash>\n` +
-            `Se mostri comandi a scopo informativo usa un blocco \`\`\`bash ... \`\`\`.\n` +
-            `Per i percorsi usa testo tra backtick (es. \`/home/utente/cartella\`), senza link file://.\n` +
-            `Se non servono comandi, rispondi con 1-2 frasi essenziali.`;
+            `You are the compact AI assistant built into the GNOME Shell Dynamic Island on the user's Linux PC (home folder: ${home}).\n` +
+            `STRICT BREVITY RULE: Answer in English in an EXTREMELY CONCISE way: MAXIMUM 2-3 SENTENCES in total. Absolutely forbidden: walls of text, endless lists or long guides.\n` +
+            `If fulfilling the request requires doing or verifying something on the PC, do not run anything directly: describe in 1 sentence what you want to do and write EVERY bash command on a separate line in the exact format: CMD: <bash command>\n` +
+            `If you show commands for information purposes, use a \`\`\`bash ... \`\`\` block.\n` +
+            `For paths use text between backticks (e.g. \`/home/user/folder\`), without file:// links.\n` +
+            `If no commands are needed, answer with 1-2 essential sentences.`;
 
         let rawResponse = '';
         try {
@@ -5641,7 +5641,7 @@ export class DynamicIslandManager {
                     stream: false,
                     keep_alive: unloadAfterUse ? 0 : '5m',
                 });
-                this._updateAiStatusUI(`${model} pensa…`);
+                this._updateAiStatusUI(`${model} is thinking…`);
                 const { stdout, stderr } = await this._runAiSubprocess([
                     'curl', '-s', '-m', '120',
                     `${ep}/api/generate`,
@@ -5650,10 +5650,10 @@ export class DynamicIslandManager {
                 ], 125, payload);
                 if (gen !== this._aiGen) return null;
                 if (!stdout) {
-                    return `Impossibile contattare Ollama su ${ep}. Assicurati che il servizio sia attivo (${stderr || 'timeout'}).`;
+                    return `Unable to contact Ollama at ${ep}. Make sure the service is running (${stderr || 'timeout'}).`;
                 }
                 const parsed = JSON.parse(stdout);
-                if (parsed.error) return `Errore Ollama: ${parsed.error}`;
+                if (parsed.error) return `Ollama error: ${parsed.error}`;
                 rawResponse = (parsed.response || '').trim();
 
                 if (unloadAfterUse) {
@@ -5671,7 +5671,7 @@ export class DynamicIslandManager {
                     temperature: 0.5,
                 });
                 const chatUrl = ep.endsWith('/v1') ? `${ep}/chat/completions` : `${ep}/v1/chat/completions`;
-                this._updateAiStatusUI(`${model} pensa…`);
+                this._updateAiStatusUI(`${model} is thinking…`);
                 const { stdout, stderr } = await this._runAiSubprocess([
                     'curl', '-s', '-m', '120',
                     chatUrl,
@@ -5680,17 +5680,17 @@ export class DynamicIslandManager {
                 ], 125, payload);
                 if (gen !== this._aiGen) return null;
                 if (!stdout) {
-                    return `Impossibile contattare il motore su ${chatUrl} (${stderr || 'timeout'}).`;
+                    return `Unable to contact the engine at ${chatUrl} (${stderr || 'timeout'}).`;
                 }
                 const parsed = JSON.parse(stdout);
-                if (parsed.error) return `Errore motore locale: ${parsed.error?.message || JSON.stringify(parsed.error)}`;
+                if (parsed.error) return `Local engine error: ${parsed.error?.message || JSON.stringify(parsed.error)}`;
                 rawResponse = (parsed.choices?.[0]?.message?.content || '').trim();
             }
         } catch (e) {
-            return `Errore durante l'interrogazione del modello locale: ${e.message}`;
+            return `Error while querying the local model: ${e.message}`;
         }
 
-        if (!rawResponse) return 'Nessuna risposta dal modello locale.';
+        if (!rawResponse) return 'No response from the local model.';
 
         // Parse any commands
         const cmds = [];
@@ -5712,15 +5712,15 @@ export class DynamicIslandManager {
         for (const cmd of cmds) {
             if (gen !== this._aiGen) return null;
             const ok = await this._aiConfirm(
-                explanation || `${model} vuole eseguire un comando sul PC:`,
+                explanation || `${model} wants to run a command on your PC:`,
                 cmd
             );
             if (gen !== this._aiGen) return null;
             if (!ok) {
-                results.push(`✕ Negato: \`${cmd}\``);
+                results.push(`✕ Denied: \`${cmd}\``);
                 continue;
             }
-            this._updateAiStatusUI('Eseguo…');
+            this._updateAiStatusUI('Running…');
             const r = await this._runAiSubprocess(['bash', '-lc', cmd], 120);
             const o = ((r.stdout || '') + (r.stderr && r.stderr !== 'timeout' ? `\n${r.stderr}` : '')).trim();
             results.push(`✓ \`${cmd}\`${o ? `\n${o.slice(0, 500)}` : ''}`);
@@ -5732,7 +5732,7 @@ export class DynamicIslandManager {
     async _askStockAi(prompt) {
         const gen = ++this._aiGen;
         this._aiState = 'thinking';
-        this._updateAiStatusUI('Penso...');
+        this._updateAiStatusUI('Thinking...');
 
         try {
             const provider = this._aiProvider || 'agy';
@@ -5787,7 +5787,7 @@ export class DynamicIslandManager {
             // 4. Stock built-in conversational fallback
             this._finishAi(gen, this._builtInConversationalFallback(prompt));
         } catch (e) {
-            this._finishAi(gen, 'Impossibile completare la richiesta.');
+            this._finishAi(gen, 'Unable to complete the request.');
         }
     }
 
@@ -5803,8 +5803,11 @@ export class DynamicIslandManager {
             'scrivania': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP), `${home}/Scrivania`, `${home}/Desktop`],
             'desktop': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP), `${home}/Scrivania`, `${home}/Desktop`],
             'immagini': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES), `${home}/Immagini`, `${home}/Pictures`],
+            'pictures': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES), `${home}/Immagini`, `${home}/Pictures`],
             'musica': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC), `${home}/Musica`, `${home}/Music`],
+            'music': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC), `${home}/Musica`, `${home}/Music`],
             'video': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS), `${home}/Video`, `${home}/Videos`],
+            'videos': [GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS), `${home}/Video`, `${home}/Videos`],
             'home': [home],
         };
         const candidates = map[k] || [];
@@ -5822,17 +5825,17 @@ export class DynamicIslandManager {
         const home = GLib.get_home_dir();
         const lower = prompt.toLowerCase().trim();
 
-        // 1. Direct bash execution: "esegui ...", "terminale ...", "$ ..."
-        const cmdMatch = prompt.match(/^(?:esegui(?:\s+comando)?|comando|bash|\$)\s+(.+)$/i);
+        // 1. Direct bash execution: "run ...", "execute ...", "terminal ...", "$ ..."
+        const cmdMatch = prompt.match(/^(?:run|execute|do|terminal|bash|\$)\s+(.+)$/i);
         if (cmdMatch) {
             const rawCmd = cmdMatch[1].trim();
-            if (!(await this._aiConfirm('Vuoi che esegua questo comando?', rawCmd))) return 'Ok, non ho eseguito nulla.';
+            if (!(await this._aiConfirm('Do you want me to run this command?', rawCmd))) return 'Ok, I did not run anything.';
             const out = await this._ext._execCommandAsync(`cd "${home}" && ${rawCmd} 2>&1 | head -c 700`);
-            return (out && out.trim()) ? `Output di \`${rawCmd}\`:\n${out.trim()}` : `Comando \`${rawCmd}\` eseguito con successo.`;
+            return (out && out.trim()) ? `Output of \`${rawCmd}\`:\n${out.trim()}` : `Command \`${rawCmd}\` executed successfully.`;
         }
 
-        // 2. Create folder: "crea cartella X [in/su Documenti|Desktop|Scaricati|Home]"
-        const mkdirMatch = prompt.match(/crea\s+(?:una\s+)?(?:nuova\s+)?cartella\s+(?:chiamata\s+)?["']?([^"']+?)["']?(?:\s+(?:in|su|sulla|dentro)\s+(documenti|documents|scaricati|downloads?|scrivania|desktop|immagini|musica|video|home|~\/\S+|\/\S+))?$/i);
+        // 2. Create folder: "create folder X [in/on Documents|Desktop|Downloads|Home]"
+        const mkdirMatch = prompt.match(/create\s+(?:a\s+)?(?:new\s+)?folder\s+(?:called\s+)?["']?([^"']+?)["']?(?:\s+(?:in|on|inside)\s+(documents|download|downloads|desktop|home|pictures|music|videos|~\/\S+|\/\S+))?$/i);
         if (mkdirMatch) {
             const folderName = mkdirMatch[1].trim();
             const whereRaw = mkdirMatch[2] ? mkdirMatch[2].trim() : 'home';
@@ -5840,15 +5843,15 @@ export class DynamicIslandManager {
             const targetPath = folderName.startsWith('/') ? folderName
                 : folderName.startsWith('~/') ? `${home}/${folderName.slice(2)}`
                 : `${baseDir}/${folderName}`;
-            if (!(await this._aiConfirm('Creo una nuova cartella?', targetPath))) return 'Ok, cartella non creata.';
+            if (!(await this._aiConfirm('Create a new folder?', targetPath))) return 'Ok, folder not created.';
             const res = GLib.mkdir_with_parents(targetPath, 0o755);
             if (res === 0)
-                return `Cartella creata: ${targetPath}`;
-            return `Impossibile creare la cartella ${targetPath}.`;
+                return `Folder created: ${targetPath}`;
+            return `Unable to create the folder ${targetPath}.`;
         }
 
-        // 3. Create file: "crea file X [con scritto Y]"
-        const touchMatch = prompt.match(/crea\s+(?:un\s+)?(?:nuovo\s+)?file\s+["']?([^\s"']+)["']?(?:\s+(?:in|su)\s+(documenti|documents|scaricati|downloads?|scrivania|desktop|home))?(?:\s+con\s+(?:scritto|contenuto|testo)\s+(.+))?$/i);
+        // 3. Create file: "create file X [with content Y]"
+        const touchMatch = prompt.match(/create\s+(?:a\s+)?(?:new\s+)?file\s+["']?([^\s"']+)["']?(?:\s+(?:in|on)\s+(documents|download|downloads|desktop|home))?(?:\s+with\s+(?:text|content)\s+(.+))?$/i);
         if (touchMatch) {
             const fileName = touchMatch[1].trim();
             const baseDir = this._resolveUserDir(touchMatch[2] || 'home');
@@ -5856,37 +5859,37 @@ export class DynamicIslandManager {
             const filePath = fileName.startsWith('/') ? fileName
                 : fileName.startsWith('~/') ? `${home}/${fileName.slice(2)}`
                 : `${baseDir}/${fileName}`;
-            if (!(await this._aiConfirm('Creo questo file?', filePath))) return 'Ok, file non creato.';
+            if (!(await this._aiConfirm('Create this file?', filePath))) return 'Ok, file not created.';
             try {
                 GLib.file_set_contents(filePath, content);
-                return `File creato: ${filePath}`;
+                return `File created: ${filePath}`;
             } catch (e) {
-                return `Errore nella creazione di ${filePath}.`;
+                return `Error creating ${filePath}.`;
             }
         }
 
-        // 4. List / view documents or folders: "mostra documenti", "vedi cartella scaricati", "cosa c'è in desktop"
-        const listDirMatch = prompt.match(/(?:mostra|vedi|elenca|lista|apri|cosa\s+c['’]?è\s+(?:in|su|nella\s+cartella)| file\s+(?:in|su))\s+(?:i\s+|la\s+cartella\s+|nella\s+cartella\s+)?(documenti|documents|scaricati|downloads?|scrivania|desktop|immagini|musica|video|home|~\/\S+|\/\S+)/i);
-        if (listDirMatch || lower === 'documenti' || lower === 'scaricati' || lower === 'desktop' || lower === 'scrivania') {
+        // 4. List / view documents or folders: "show documents", "list folder downloads", "what's in desktop"
+        const listDirMatch = prompt.match(/(?:show|list|view|see|open|what['’]?s?\s+(?:in|on|inside\s+(?:the\s+)?(?:folder\s+)?)| files?\s+(?:in|on))\s+(?:the\s+|folder\s+)?(documents|download|downloads|desktop|pictures|music|videos|home|~\/\S+|\/\S+)/i);
+        if (listDirMatch || lower === 'documents' || lower === 'downloads' || lower === 'desktop' || lower === 'download') {
             const dirKey = listDirMatch ? listDirMatch[1] : lower;
             const dirPath = this._resolveUserDir(dirKey);
-            if (lower.startsWith('apri ')) {
+            if (lower.startsWith('open ')) {
                 try {
                     const gfile = Gio.File.new_for_path(dirPath);
                     Gio.AppInfo.launch_default_for_uri_async(gfile.get_uri(), null, null, null);
-                    return `Ho aperto la cartella ${dirPath}.`;
+                    return `I opened the folder ${dirPath}.`;
                 } catch (e) {}
             }
             const safeDir = dirPath.replace(/'/g, "'\\''");
             const lsOut = await this._ext._execCommandAsync(`ls -1t '${safeDir}' 2>/dev/null | head -n 12`);
             if (!lsOut || !lsOut.trim())
-                return `La cartella ${dirPath} è vuota.`;
+                return `The folder ${dirPath} is empty.`;
             const items = lsOut.trim().split('\n').join(', ');
-            return `File in ${dirPath}:\n${items}`;
+            return `Files in ${dirPath}:\n${items}`;
         }
 
-        // 5. Read / view a specific file or document: "leggi file X", "vedi documento X"
-        const readMatch = prompt.match(/^(?:leggi|mostra\s+contenuto|vedi\s+(?:il\s+)?(?:file|documento))\s+["']?(.+?)["']?$/i);
+        // 5. Read / view a specific file or document: "read file X", "view document X"
+        const readMatch = prompt.match(/^(?:read|show\s+content|view\s+(?:the\s+)?(?:file|document))\s+["']?(.+?)["']?$/i);
         if (readMatch) {
             const target = readMatch[1].trim();
             const safeTarget = target.replace(/'/g, "'\\''");
@@ -5894,56 +5897,56 @@ export class DynamicIslandManager {
                 `if [ -f '${safeTarget}' ]; then echo '${safeTarget}'; elif [ -f "${home}/${safeTarget}" ]; then echo "${home}/${safeTarget}"; else find "${home}" -maxdepth 3 -iname '*${safeTarget}*' -type f 2>/dev/null | head -n 1; fi`
             );
             const filePath = (found || '').trim();
-            if (!filePath) return `Non ho trovato il file "${target}".`;
+            if (!filePath) return `I could not find the file "${target}".`;
             const headOut = await this._ext._execCommandAsync(`head -c 500 '${filePath.replace(/'/g, "'\\''")}' 2>/dev/null`);
             return headOut && headOut.trim()
                 ? `${filePath}:\n${headOut.trim()}`
-                : `Il file ${filePath} è vuoto o binario.`;
+                : `The file ${filePath} is empty or binary.`;
         }
 
-        // 6. Search files on PC: "cerca file X", "trova documento X"
-        const findMatch = prompt.match(/^(?:cerca|trova)\s+(?:il\s+)?(?:file|documento|cartella)?\s*["']?(.+?)["']?$/i);
+        // 6. Search files on PC: "search file X", "find document X"
+        const findMatch = prompt.match(/^(?:search|find)\s+(?:the\s+)?(?:file|document|folder)?\s*["']?(.+?)["']?$/i);
         if (findMatch) {
             const query = findMatch[1].trim().replace(/'/g, '');
             const findOut = await this._ext._execCommandAsync(
                 `find "${home}" -maxdepth 3 -not -path '*/.*' -iname '*${query}*' 2>/dev/null | head -n 8`
             );
             if (!findOut || !findOut.trim())
-                return `Nessun file o cartella trovato per "${query}".`;
+                return `No file or folder found for "${query}".`;
             const results = findOut.trim().split('\n').map(p => p.replace(home, '~')).join('\n');
-            return `Risultati trovati:\n${results}`;
+            return `Results found:\n${results}`;
         }
 
-        // 7. Install application: "installa X", "installa app X"
-        const installMatch = prompt.match(/^(?:installa(?:\s+l['’]?app|\s+applicazione|\s+pacchetto)?|scarica\s+app)\s+([a-zA-Z0-9._+-]+)$/i);
+        // 7. Install application: "install X", "install app X"
+        const installMatch = prompt.match(/^(?:install(?: an?| the)?\s+(?:app|application|package)?|download\s+app)\s+([a-zA-Z0-9._+-]+)$/i);
         if (installMatch) {
             const pkg = installMatch[1].trim();
-            if (!(await this._aiConfirm('Installo questa applicazione?', pkg))) return 'Ok, installazione annullata.';
-            this._updateAiStatusUI(`Installo ${pkg}...`);
+            if (!(await this._aiConfirm('Install this application?', pkg))) return 'Ok, installation cancelled.';
+            this._updateAiStatusUI(`Installing ${pkg}...`);
             // Try user-level Flatpak first (no root password needed), otherwise pkexec dnf/apt/pacman
             const script = `
                 if command -v flatpak >/dev/null 2>&1; then
                     FLAT_ID=$(flatpak search --columns=application '${pkg}' 2>/dev/null | head -n 1 | awk '{print $1}')
                     if [ -n "$FLAT_ID" ] && [ "$FLAT_ID" != "No" ]; then
                         flatpak install --user -y flathub "$FLAT_ID" >/dev/null 2>&1 || flatpak install -y --noninteractive "$FLAT_ID" >/dev/null 2>&1
-                        if [ $? -eq 0 ]; then echo "Installato $FLAT_ID via Flatpak!"; exit 0; fi
+                        if [ $? -eq 0 ]; then echo "Installed $FLAT_ID via Flatpak!"; exit 0; fi
                     fi
                 fi
                 if command -v dnf >/dev/null 2>&1; then
-                    pkexec dnf install -y '${pkg}' >/dev/null 2>&1 && echo "Installato ${pkg} via DNF!" && exit 0
+                    pkexec dnf install -y '${pkg}' >/dev/null 2>&1 && echo "Installed ${pkg} via DNF!" && exit 0
                 elif command -v apt-get >/dev/null 2>&1; then
-                    pkexec apt-get install -y '${pkg}' >/dev/null 2>&1 && echo "Installato ${pkg} via APT!" && exit 0
+                    pkexec apt-get install -y '${pkg}' >/dev/null 2>&1 && echo "Installed ${pkg} via APT!" && exit 0
                 elif command -v pacman >/dev/null 2>&1; then
-                    pkexec pacman -S --noconfirm '${pkg}' >/dev/null 2>&1 && echo "Installato ${pkg} via Pacman!" && exit 0
+                    pkexec pacman -S --noconfirm '${pkg}' >/dev/null 2>&1 && echo "Installed ${pkg} via Pacman!" && exit 0
                 fi
-                echo "Impossibile installare automaticamente ${pkg}. Verifica il nome del pacchetto."
+                echo "Unable to install ${pkg} automatically. Check the package name."
             `;
             const instOut = await this._ext._execCommandAsync(script);
-            return (instOut || '').trim() || `Installazione di ${pkg} avviata.`;
+            return (instOut || '').trim() || `Installation of ${pkg} started.`;
         }
 
-        // 8. Launch / open application: "apri firefox", "avvia terminale", "lancia vlc"
-        const openAppMatch = prompt.match(/^(?:apri|avvia|lancia)\s+(?:l['’]?app\s+)?([a-zA-Z0-9._+-]+)$/i);
+        // 8. Launch / open application: "open firefox", "start terminal", "launch vlc"
+        const openAppMatch = prompt.match(/^(?:open|start|launch)\s+(?:the\s+app\s+)?([a-zA-Z0-9._+-]+)$/i);
         if (openAppMatch) {
             const appQuery = openAppMatch[1].toLowerCase().trim();
             const apps = Gio.AppInfo.get_all();
@@ -5954,116 +5957,116 @@ export class DynamicIslandManager {
                 const exec = (a.get_executable() || '').toLowerCase();
                 return name.includes(appQuery) || id.includes(appQuery) || exec.includes(appQuery);
             });
-            if (matched && !(await this._aiConfirm('Apro questa applicazione?', matched.get_name()))) return 'Ok, non la apro.';
+            if (matched && !(await this._aiConfirm('Open this application?', matched.get_name()))) return 'Ok, I will not open it.';
             if (matched) {
                 matched.launch([], null);
-                return `Ho avviato ${matched.get_name()}.`;
+                return `I started ${matched.get_name()}.`;
             }
             const binPath = GLib.find_program_in_path(appQuery);
             if (binPath) {
                 GLib.spawn_command_line_async(binPath);
-                return `Ho avviato ${appQuery}.`;
+                return `I started ${appQuery}.`;
             }
         }
 
-        // Add todo command: "aggiungi todo ...", "ricordami di ..."
-        const todoMatch = prompt.match(/^(?:aggiungi\s+(?:todo|attività|task)|ricordami\s+di)\s+(.+)$/i);
+        // Add todo command: "add todo ...", "remind me to ..."
+        const todoMatch = prompt.match(/^(?:add\s+(?:a\s+)?(?:todo|task)|remind\s+me\s+to)\s+(.+)$/i);
         if (todoMatch) {
             const text = todoMatch[1].trim();
-            if (!(await this._aiConfirm('Aggiungo questo To-Do?', text))) return 'Ok, non l\'ho aggiunto.';
+            if (!(await this._aiConfirm('Add this to the To-Do list?', text))) return 'Ok, not added.';
             this._ext._todos = this._ext._todos || [];
-            const newTask = { text, done: false, topic: this._todoTopic || 'Generale' };
+            const newTask = { text, done: false, topic: this._todoTopic || 'General' };
             this._ext._todos.push(newTask);
             this._commitTodos();
             if (typeof this._ext.createGoogleTaskAsync === 'function') {
                 this._ext.createGoogleTaskAsync(newTask);
             }
-            return `Fatto! Ho aggiunto "${text}" alla tua lista To-Do.`;
+            return `Done! Added "${text}" to your To-Do list.`;
         }
 
         // Quick info shortcuts only for short questions; longer/agentic
         // requests go to the AI agent instead of being hijacked by keywords.
         const words = lower.split(/\s+/).filter(Boolean);
         if (words.length > 8) return null;
-        const has = (k) => new RegExp(`(^|[^a-zà-ù])${k}`, 'i').test(lower);
+        const has = (k) => new RegExp(`(^|[^a-z])${k}`, 'i').test(lower);
 
-        // Disk / storage space query ("quanti giga mi rimangono", "spazio disco", ecc.)
-        if (has('giga') || has('gica') || has('spazio') || has('disco') || has('gb')) {
-            const dfOut = await this._ext._execCommandAsync("df -hP / | awk 'NR==2 {print $4 \" liberi su \" $2 \" (\" $5 \" usato)\"}'");
+        // Disk / storage space query ("how much space do I have left", "disk space", etc.)
+        if (has('gigabyte') || has('space') || has('storage') || has('disk') || has('gb')) {
+            const dfOut = await this._ext._execCommandAsync("df -hP / | awk 'NR==2 {print $4 \" free of \" $2 \" (\" $5 \" used)\"}'");
             if (dfOut && dfOut.trim()) {
-                return `Sul disco principale ti rimangono ${dfOut.trim()}.`;
+                return `You have ${dfOut.trim()} free on the main disk.`;
             }
         }
 
         // RAM / CPU / System query
-        if (has('ram') || has('memoria')) {
-            const memOut = await this._ext._execCommandAsync("free -h | awk '/^Mem:/ {print $3 \" usati su \" $2 \" (\" $7 \" disponibili)\"}'");
+        if (has('ram') || has('memory')) {
+            const memOut = await this._ext._execCommandAsync("free -h | awk '/^Mem:/ {print $3 \" used of \" $2 \" (\" $7 \" available)\"}'");
             if (memOut && memOut.trim()) {
-                return `Memoria RAM: ${memOut.trim()}.`;
+                return `RAM: ${memOut.trim()}.`;
             }
         }
-        if (has('sistema operativo') || has('distro') || has('kernel')) {
+        if (has('operating system') || has('os') || has('distro') || has('kernel')) {
             const osOut = await this._ext._execCommandAsync(". /etc/os-release 2>/dev/null && echo \"$PRETTY_NAME ($(uname -sr))\"");
             if (osOut && osOut.trim()) {
-                return `Stai usando ${osOut.trim()} con GNOME Shell.`;
+                return `You are running ${osOut.trim()} with GNOME Shell.`;
             }
         }
 
         // Todo status query
-        if (has('todo') || has('attività') || has('task')) {
+        if (has('todo') || has('task')) {
             const todos = this._ext._todos || [];
             const pending = todos.filter(t => !t.done);
-            if (todos.length === 0) return 'La tua lista To-Do è vuota.';
-            if (pending.length === 0) return `Hai completato tutte le ${todos.length} attività!`;
-            return `Hai ${pending.length} attività da completare: ${pending.map(t => t.text).join(', ')}.`;
+            if (todos.length === 0) return 'Your To-Do list is empty.';
+            if (pending.length === 0) return `You completed all ${todos.length} tasks!`;
+            return `You have ${pending.length} tasks to complete: ${pending.map(t => t.text).join(', ')}.`;
         }
 
         // Calendar / today's plan query
-        if (has('oggi') || has('impegn') || has('calendario') || has('event')) {
+        if (has('today') || has('agenda') || has('calendar') || has('event')) {
             const todayKey = this._dayKey(new Date());
             const evs = this._getEventsForDate(new Date());
             const todos = (this._ext._todos || []).filter(t => !t.done);
             const parts = [];
             if (evs.length > 0) {
-                parts.push(`Eventi di oggi (${todayKey}): ${evs.map(e => `${e.time ? e.time + ' ' : ''}${e.title}`).join(', ')}.`);
+                parts.push(`Today's events (${todayKey}): ${evs.map(e => `${e.time ? e.time + ' ' : ''}${e.title}`).join(', ')}.`);
             } else {
-                parts.push(`Oggi (${todayKey}) non hai eventi in calendario.`);
+                parts.push(`You have no events in the calendar for today (${todayKey}).`);
             }
             if (todos.length > 0) {
-                parts.push(`To-Do aperti (${todos.length}): ${todos.slice(0, 4).map(t => t.text).join(', ')}.`);
+                parts.push(`Open To-Do items (${todos.length}): ${todos.slice(0, 4).map(t => t.text).join(', ')}.`);
             }
             return parts.join(' ');
         }
 
         // Clipboard query
-        if (has('appunt') || has('clipboard') || has('riassumi')) {
-            if (this._clips.length === 0) return 'I tuoi appunti sono vuoti.';
+        if (has('clipboard') || has('notes') || has('summar')) {
+            if (this._clips.length === 0) return 'Your clipboard is empty.';
             const latest = this._clips[0].text.replace(/\s+/g, ' ').trim();
             const short = latest.length > 160 ? `${latest.slice(0, 160)}…` : latest;
-            return `Ultimo elemento negli appunti (${this._clips.length} totali): "${short}"`;
+            return `Latest clipboard item (${this._clips.length} total): "${short}"`;
         }
 
         // Pomodoro control / tip
         if (has('pomodoro') || has('timer')) {
-            if (has('avvia') || has('start') || has('inizia')) {
+            if (has('start') || has('begin')) {
                 if (!this._pomo.running) this._togglePomodoro();
-                return `Timer Pomodoro avviato (${this._pomo.workMins} min). Buon lavoro!`;
+                return `Pomodoro timer started (${this._pomo.workMins} min). Good luck!`;
             }
-            if (has('ferma') || has('pausa') || has('stop')) {
+            if (has('stop') || has('pause')) {
                 if (this._pomo.running) this._togglePomodoro();
-                return 'Timer Pomodoro messo in pausa.';
+                return 'Pomodoro timer paused.';
             }
             const mins = Math.ceil(this._pomo.remainingSec / 60);
-            return `Il Pomodoro è ${this._pomo.running ? 'in corso' : 'in pausa'} (${mins} min rimanenti, ${this._pomo.sessions} sessioni completate).`;
+            return `The Pomodoro is ${this._pomo.running ? 'running' : 'paused'} (${mins} min left, ${this._pomo.sessions} completed sessions).`;
         }
 
-        if (has('focus') || has('concentr')) {
-            return 'Scegli un solo obiettivo, chiudi le notifiche superflue e avvia una sessione Pomodoro da 25 minuti.';
+        if (has('focus') || has('concentrat')) {
+            return 'Pick a single goal, close unnecessary notifications, and start a 25-minute Pomodoro session.';
         }
 
-        if (has('che ore') || has('orario') || has('data')) {
+        if (has('what time') || has('time') || has('date')) {
             const now = GLib.DateTime.new_now_local();
-            return `Sono le ${now.format('%H:%M')} del ${now.format('%d/%m/%Y')}.`;
+            return `It is ${now.format('%H:%M')} on ${now.format('%d/%m/%Y')}.`;
         }
 
         return null;
@@ -6071,10 +6074,10 @@ export class DynamicIslandManager {
 
     _builtInConversationalFallback(prompt) {
         const lower = prompt.toLowerCase();
-        if (lower.startsWith('ciao') || lower.startsWith('salve') || lower.startsWith('ehi')) {
-            return 'Ciao! Sono il tuo agente: posso creare cartelle/file, mostrare o cercare documenti, installare o aprire app, eseguire comandi e gestire To-Do e Pomodoro.';
+        if (lower.startsWith('hello') || lower.startsWith('hi') || lower.startsWith('hey') || lower.startsWith('ciao')) {
+            return 'Hello! I am your agent: I can create folders/files, show or search documents, install or open apps, run commands, and manage your To-Do list and Pomodoro timer.';
         }
-        return 'Posso agire sul tuo PC: prova "mostra documenti", "crea cartella X su Desktop", "cerca file Y", "installa app Z", "apri firefox" o "esegui <comando>".';
+        return 'I can act on your PC: try "show documents", "create folder X on Desktop", "search file Y", "install app Z", "open firefox" or "run <command>".';
     }
 
     // =========================================================================
@@ -6108,7 +6111,7 @@ export class DynamicIslandManager {
             reactive: true,
         });
         this._calMonthText = new St.Label({
-            text: 'Novembre 2026',
+            text: 'November 2026',
             style_class: 'di-cal-month-title',
         });
         this._calMonthLabel.set_child(this._calMonthText);
@@ -6135,7 +6138,7 @@ export class DynamicIslandManager {
 
         // Weekdays Header Row
         const wkRow = new St.BoxLayout({ style_class: 'di-cal-weekdays' });
-        WEEKDAYS_IT.forEach(w => {
+        WEEKDAYS.forEach(w => {
             wkRow.add_child(new St.Label({
                 text: w,
                 style_class: 'di-cal-weekday',
@@ -6166,12 +6169,12 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._calSelectedTitle = new St.Label({
-            text: 'Oggi',
+            text: 'Today',
             style_class: 'di-cal-agenda-title',
             x_expand: true,
         });
         const todayJumpBtn = new St.Button({
-            label: 'Oggi',
+            label: 'Today',
             style_class: 'di-filter-pill',
             reactive: true,
             track_hover: true,
@@ -6208,7 +6211,7 @@ export class DynamicIslandManager {
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._calEntry = new St.Entry({
-            hint_text: 'Nuovo evento (es. 15:30 Call)...',
+            hint_text: 'New event (e.g. 15:30 Call)...',
             style_class: 'di-search-entry',
             x_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
@@ -6327,7 +6330,7 @@ export class DynamicIslandManager {
 
         const year = this._calMonth.getFullYear();
         const month = this._calMonth.getMonth();
-        this._calMonthText.set_text(`${MONTHS_IT[month]} ${year}`);
+        this._calMonthText.set_text(`${MONTHS[month]} ${year}`);
 
         this._calGridBox.destroy_all_children();
 
@@ -6377,8 +6380,8 @@ export class DynamicIslandManager {
         const isSelToday = this._dayKey(this._calSelected) === this._dayKey(this._calToday);
         this._calSelectedTitle.set_text(
             isSelToday
-                ? `Oggi, ${this._calSelected.getDate()} ${MONTHS_IT[this._calSelected.getMonth()]}`
-                : `${this._calSelected.getDate()} ${MONTHS_IT[this._calSelected.getMonth()]} ${this._calSelected.getFullYear()}`
+                ? `Today, ${this._calSelected.getDate()} ${MONTHS[this._calSelected.getMonth()]}`
+                : `${this._calSelected.getDate()} ${MONTHS[this._calSelected.getMonth()]} ${this._calSelected.getFullYear()}`
         );
 
         this._calEventsList.destroy_all_children();
@@ -6386,7 +6389,7 @@ export class DynamicIslandManager {
 
         if (dayEvents.length === 0) {
             this._calEventsList.add_child(new St.Label({
-                text: 'Nessun impegno per questo giorno',
+                text: 'No events for this day',
                 style_class: 'di-cal-empty-label',
             }));
             return;
