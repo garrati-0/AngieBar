@@ -92,5 +92,117 @@
       <summary>Comma separated list of absolute paths for the file menu</summary>
     </key>
 
+    <!-- ── Dynamic Island ── -->
+    <key name="di-open-on-hover" type="b">
+      <default>true</default>
+      <summary>Open Dynamic Island when hovering the center pill</summary>
+    </key>
+    <key name="di-pill-notifications" type="b">
+      <default>true</default>
+      <summary>Show notifications in the clock pill instead of the stock GNOME banners</summary>
+    </key>
+    <key name="di-default-tab" type="s">
+      <default>'notifications'</default>
+      <summary>Default tab opened in Dynamic Island</summary>
+    </key>
+    <key name="di-show-tab-notifications" type="b">
+      <default>true</default>
+      <summary>Show Notifications tab in Dynamic Island</summary>
+    </key>
+    <key name="di-show-tab-music" type="b">
+      <default>true</default>
+      <summary>Show Music tab in Dynamic Island</summary>
+    </key>
+    <key name="di-show-tab-clipboard" type="b">
+      <default>true</default>
+      <summary>Show Clipboard tab in Dynamic Island</summary>
+    </key>
+    <key name="di-show-tab-pomodoro" type="b">
+      <default>true</default>
+      <summary>Show Pomodoro tab in Dynamic Island</summary>
+    </key>
+    <key name="di-show-tab-ai" type="b">
+      <default>true</default>
+      <summary>Show AI Assistant tab in Dynamic Island</summary>
+    </key>
+    <key name="di-show-tab-calendar" type="b">
+      <default>true</default>
+      <summary>Show Calendar tab in Dynamic Island</summary>
+    </key>
+    <key name="di-show-tab-todo" type="b">
+      <default>true</default>
+      <summary>Show To-Do tab in Dynamic Island</summary>
+    </key>
+    <key name="di-clipboard-ttl-mins" type="i">
+      <default>60</default>
+      <summary>Auto-delete unpinned clipboard items after N minutes (0 = never)</summary>
+    </key>
+    <key name="di-google-tasks-enabled" type="b">
+      <default>true</default>
+      <summary>Sync To-Do lists and tasks with Google Tasks via GNOME Online Accounts</summary>
+    </key>
+    <key name="di-hidden-todo-topics" type="as">
+      <default>[]</default>
+      <summary>List of To-Do topics/lists hidden from the Dynamic Island</summary>
+    </key>
+    <key name="ai-provider" type="s">
+      <default>'agy'</default>
+      <summary>AI engine: agy, codex, claude, local, internal</summary>
+    </key>
+    <key name="ai-ask-permission" type="b">
+      <default>true</default>
+      <summary>Ask permission before the AI performs actions on the PC</summary>
+    </key>
+    <key name="ai-shortcut" type="as">
+      <default><![CDATA[['<Super><Shift>a']]]></default>
+      <summary>Keyboard shortcut to summon the AI pill</summary>
+    </key>
+    <key name="local-ai-engine" type="s">
+      <default>'ollama'</default>
+      <summary>Local inference engine type: ollama, openai-compatible</summary>
+    </key>
+    <key name="local-ai-endpoint" type="s">
+      <default>'http://127.0.0.1:11434'</default>
+      <summary>Local AI inference API endpoint</summary>
+    </key>
+    <key name="local-ai-model" type="s">
+      <default>'llama3.2'</default>
+      <summary>Model name for local inference engine</summary>
+    </key>
+    <key name="local-ai-unload-after-use" type="b">
+      <default>true</default>
+      <summary>Unload model from VRAM/RAM after generation</summary>
+    </key>
+
+    <!-- ── Pomodoro ── -->
+    <key name="pomodoro-work-mins" type="i">
+      <default>25</default>
+      <summary>Focus/study duration in minutes</summary>
+    </key>
+    <key name="pomodoro-break-mins" type="i">
+      <default>5</default>
+      <summary>Short break duration in minutes</summary>
+    </key>
+    <key name="pomodoro-long-break-mins" type="i">
+      <default>15</default>
+      <summary>Long break duration in minutes</summary>
+    </key>
+    <key name="pomodoro-cycles-before-long" type="i">
+      <default>4</default>
+      <summary>Number of focus sessions before a long break</summary>
+    </key>
+    <key name="pomodoro-auto-start-break" type="b">
+      <default>true</default>
+      <summary>Automatically start break timer when focus session finishes</summary>
+    </key>
+    <key name="pomodoro-auto-start-focus" type="b">
+      <default>false</default>
+      <summary>Automatically start focus timer when break finishes</summary>
+    </key>
+    <key name="pomodoro-break-color" type="s">
+      <default>'#2ec27e'</default>
+      <summary>Accent color shown in the island during break</summary>
+    </key>
+
   </schema>
 </schemalist>

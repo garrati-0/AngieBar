@@ -1,4 +1,5 @@
 import Gio from 'gi://Gio';
+import GdkPixbuf from 'gi://GdkPixbuf';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
@@ -6,6 +7,7 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import UPowerGlib from 'gi://UPowerGlib';
+import { DynamicIslandManager } from './dynamicIsland.js';
 
 
 export default class AngieBarExtension extends Extension {
@@ -15,6 +17,13 @@ export default class AngieBarExtension extends Extension {
         if (!this._objectSignals) this._objectSignals = [];
         this._objectSignals.push({ object, id });
         return id;
+    }
+
+    _clearTimer(propName) {
+        if (this[propName]) {
+            GLib.source_remove(this[propName]);
+            this[propName] = null;
+        }
     }
 
     _readFileAsync(path) {
@@ -61,6 +70,16 @@ export default class AngieBarExtension extends Extension {
         this._objectSignals = [];
         this._settings = this.getSettings('org.gnome.shell.extensions.AngieBar');
 
+        // Clean up any leftover islands from a previous incomplete enable()
+        [Main.panel._leftBox, Main.panel._centerBox, Main.panel._rightBox].forEach(box => {
+            if (!box) return;
+            box.get_children().slice().forEach(child => {
+                const sc = child.get_style_class_name?.() || '';
+                if (sc.includes('custom-island') || sc.includes('logo-island')) {
+                    try { child.destroy(); } catch (e) {}
+                }
+            });
+        });
 
         // --- 1. NASCONDIAMO GLI ELEMENTI ORIGINALI ---
         Main.panel._leftBox.get_children().forEach(c => c.hide());
@@ -82,7 +101,17 @@ export default class AngieBarExtension extends Extension {
         this._centerBoxLayout = new St.BoxLayout({ style_class: 'center-island-box' });
         this._centerIsland.set_child(this._centerBoxLayout);
 
-        this._mediaArt = new St.Icon({ style_class: 'media-art', visible: false });
+        this._mediaArt = new St.Bin({
+            style_class: 'media-art',
+            visible: false,
+            y_align: Clutter.ActorAlign.CENTER,
+            x_align: Clutter.ActorAlign.CENTER,
+        });
+        this._mediaArtFallbackIcon = new St.Icon({
+            icon_name: 'audio-x-generic-symbolic',
+            icon_size: 14,
+        });
+        this._mediaArt.set_child(this._mediaArtFallbackIcon);
         this._timeLabel = new St.Label({
             text: this._getFormattedTime(),
             y_align: Clutter.ActorAlign.CENTER,
@@ -100,9 +129,9 @@ export default class AngieBarExtension extends Extension {
         this._centerBoxLayout.add_child(this._mediaWave);
 
         this._connect(this._centerIsland, 'clicked', () => {
-            let dateMenu = Main.panel.statusArea.dateMenu;
-            dateMenu.menu.sourceActor = this._centerIsland;
-            dateMenu.menu.toggle();
+            if (this._dynamicIsland) {
+                this._dynamicIsland.toggleFromClick();
+            }
         });
 
         Main.panel._centerBox.add_child(this._centerIsland);
@@ -124,17 +153,20 @@ export default class AngieBarExtension extends Extension {
         this._btIcon = new St.Icon({ icon_name: 'bluetooth-active-symbolic', style_class: 'system-icon' });
         this._volIcon = new St.Icon({ icon_name: 'audio-volume-high-symbolic', style_class: 'system-icon', reactive: true });
 
-        this._connect(this._wifiIcon, 'enter-event', async () => {
+        this._connect(this._wifiIcon, 'enter-event', () => {
             this._isWifiHovered = true;
             this._showTooltip(this._wifiIcon, 'WiFi: Loading...');
-            let info = await this._getWifiInfoAsync();
-            if (this._isWifiHovered) {
-                this._showTooltip(this._wifiIcon, info);
-            }
+            this._getWifiInfoAsync().then(info => {
+                if (this._isWifiHovered) {
+                    this._showTooltip(this._wifiIcon, info);
+                }
+            });
+            return Clutter.EVENT_PROPAGATE;
         });
         this._connect(this._wifiIcon, 'leave-event', () => {
             this._isWifiHovered = false;
             this._hideTooltip();
+            return Clutter.EVENT_PROPAGATE;
         });
 
         this._connect(this._volIcon, 'scroll-event', (actor, event) => {
@@ -203,8 +235,12 @@ export default class AngieBarExtension extends Extension {
 
         this._connect(this._batteryBtn, 'enter-event', () => {
             this._showTooltip(this._batteryBtn, this._getBatteryTooltip());
+            return Clutter.EVENT_PROPAGATE;
         });
-        this._connect(this._batteryBtn, 'leave-event', () => this._hideTooltip());
+        this._connect(this._batteryBtn, 'leave-event', () => {
+            this._hideTooltip();
+            return Clutter.EVENT_PROPAGATE;
+        });
 
         // --- 3.D MODULO POWER ---
         this._powerIsland = new St.Button({
@@ -274,17 +310,20 @@ export default class AngieBarExtension extends Extension {
         this._cpuIsland.add_child(this._cpuIcon);
         this._cpuIsland.add_child(this._cpuLabel);
         this._cpuIsland.reactive = true;
-        this._connect(this._cpuIsland, 'enter-event', async () => {
+        this._connect(this._cpuIsland, 'enter-event', () => {
             this._isCpuHovered = true;
             this._showTooltip(this._cpuIsland, `CPU: Loading...`);
-            let info = await this._getCpuInfoAsync();
-            if (this._isCpuHovered) {
-                this._showTooltip(this._cpuIsland, info);
-            }
+            this._getCpuInfoAsync().then(info => {
+                if (this._isCpuHovered) {
+                    this._showTooltip(this._cpuIsland, info);
+                }
+            });
+            return Clutter.EVENT_PROPAGATE;
         });
         this._connect(this._cpuIsland, 'leave-event', () => {
             this._isCpuHovered = false;
             this._hideTooltip();
+            return Clutter.EVENT_PROPAGATE;
         });
 
         this._ramIsland = new St.BoxLayout({ style_class: 'custom-island ram-island', y_align: Clutter.ActorAlign.CENTER });
@@ -296,8 +335,12 @@ export default class AngieBarExtension extends Extension {
         this._connect(this._ramIsland, 'enter-event', () => {
             let details = this._ramDetailsText || 'Loading...';
             this._showTooltip(this._ramIsland, `Memory Details\nUsage: ${this._ramLabel.text}\nAmount: ${details}`);
+            return Clutter.EVENT_PROPAGATE;
         });
-        this._connect(this._ramIsland, 'leave-event', () => this._hideTooltip());
+        this._connect(this._ramIsland, 'leave-event', () => {
+            this._hideTooltip();
+            return Clutter.EVENT_PROPAGATE;
+        });
 
         this._prevCpuTotal = 0;
         this._prevCpuIdle = 0;
@@ -367,24 +410,17 @@ export default class AngieBarExtension extends Extension {
         this._todoBoxLayout.add_child(todoIcon);
         this._todoBoxLayout.add_child(this._todoLabel);
 
-        this._todoMenuManager = new PopupMenu.PopupMenuManager(this);
-        this._todoMenu = new PopupMenu.PopupMenu(this._todoIsland, 0.5, St.Side.TOP);
-        this._todoMenuManager.addMenu(this._todoMenu);
-        Main.uiGroup.add_child(this._todoMenu.actor);
-        this._todoMenu.actor.hide();
-
         this._connect(this._todoIsland, 'clicked', () => {
-            this._todoMenu.toggle();
+            if (this._dynamicIsland) this._dynamicIsland.openTab('todo');
         });
 
-        this._buildTodoMenu();
         this._loadTodos();
 
         // --- TOOLTIP SYSTEM ---
         this._tooltip = new St.BoxLayout({
             style_class: 'custom-tooltip',
             visible: false,
-            vertical: true
+            orientation: Clutter.Orientation.VERTICAL
         });
         this._tooltipLabel = new St.Label({ style_class: 'tooltip-text' });
         this._tooltip.add_child(this._tooltipLabel);
@@ -432,8 +468,12 @@ export default class AngieBarExtension extends Extension {
             if (text.length > 0) {
                 this._showTooltip(this._privacyIsland, text.join('\n\n'));
             }
+            return Clutter.EVENT_PROPAGATE;
         });
-        this._connect(this._privacyIsland, 'leave-event', () => this._hideTooltip());
+        this._connect(this._privacyIsland, 'leave-event', () => {
+            this._hideTooltip();
+            return Clutter.EVENT_PROPAGATE;
+        });
 
         // ASSEMBLAGGIO PANNELLO
         Main.panel._leftBox.add_style_class_name('waybar-left-box');
@@ -469,6 +509,27 @@ export default class AngieBarExtension extends Extension {
         this._settingsSignals.push(this._settings.connect('changed::ram-color', () => this._applySecondaryColors()));
         this._settingsSignals.push(this._settings.connect('changed::workspace-active-color', () => this._updateWorkspaces()));
 
+        this._settingsSignals.push(this._settings.connect('changed::di-hidden-todo-topics', () => this._updateTodoUI()));
+        this._settingsSignals.push(this._settings.connect('changed::di-google-tasks-enabled', () => {
+            if (this._settings?.get_boolean('di-google-tasks-enabled')) {
+                this.syncGoogleTasks();
+            } else {
+                this._updateTodoUI();
+            }
+        }));
+        const diTabKeys = [
+            'di-show-tab-notifications', 'di-show-tab-music', 'di-show-tab-clipboard',
+            'di-show-tab-pomodoro', 'di-show-tab-ai', 'di-show-tab-calendar', 'di-show-tab-todo',
+            'di-default-tab',
+        ];
+        diTabKeys.forEach(k => {
+            this._settingsSignals.push(this._settings.connect(`changed::${k}`, () => {
+                if (this._dynamicIsland?._updateVisibleTabs) {
+                    this._dynamicIsland._updateVisibleTabs();
+                }
+            }));
+        });
+
         this._updateVisibility();
         this._applyColor();
         this._applySecondaryColors();
@@ -482,6 +543,9 @@ export default class AngieBarExtension extends Extension {
 
         this._timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => {
             this._tickCount++;
+            if (this._tickCount % 120 === 0 && this._settings?.get_boolean('di-google-tasks-enabled')) {
+                this.syncGoogleTasks();
+            }
             
             if (this._centerIsland && this._centerIsland.visible) {
                 this._timeLabel.set_text(this._getFormattedTime());
@@ -498,12 +562,17 @@ export default class AngieBarExtension extends Extension {
                 this._updatePrivacyAsync();
             }
 
-            if (this._tickCount > 60) this._tickCount = 0;
+            if (this._tickCount >= 120) this._tickCount = 0;
             return GLib.SOURCE_CONTINUE;
         });
 
         this._initMedia();
         this._visualizerTimerId = null;
+        try {
+            this._dynamicIsland = new DynamicIslandManager(this);
+        } catch (e) {
+            console.error(`AngieBar: DynamicIslandManager init failed: ${e}`);
+        }
     }
 
     _initMedia() {
@@ -575,61 +644,156 @@ export default class AngieBarExtension extends Extension {
         }
     }
 
+    _unpackMprisValue(v) {
+        if (!v) return null;
+        if (typeof v === 'string') return v;
+        if (typeof v.deep_unpack === 'function') return v.deep_unpack();
+        if (typeof v.unpack === 'function') return v.unpack();
+        return v;
+    }
+
+    _extractPlayerState(name, item) {
+        const proxy = item?.proxy || item;
+        if (!proxy) return null;
+        const status = proxy.PlaybackStatus || proxy.get_cached_property('PlaybackStatus')?.deep_unpack() || 'Stopped';
+        const metadata = proxy.Metadata || proxy.get_cached_property('Metadata')?.deep_unpack() || {};
+        const art = this._unpackMprisValue(metadata['mpris:artUrl'] || metadata['xesam:albumArtURL'] || metadata['mpris:artURL']);
+        const rawTitle = this._unpackMprisValue(metadata['xesam:title']);
+        const title = String(rawTitle || '');
+        const artistRaw = this._unpackMprisValue(metadata['xesam:artist']);
+        const artist = Array.isArray(artistRaw) ? artistRaw.join(', ') : String(artistRaw || '');
+        const xesamUrl = String(this._unpackMprisValue(metadata['xesam:url']) || '');
+        const lengthUs = Number(this._unpackMprisValue(metadata['mpris:length']) || 0);
+        const posProp = proxy.get_cached_property('Position');
+        const positionUs = posProp ? Number(posProp.deep_unpack()) : null;
+        const shortPlayer = (name || '').replace('org.mpris.MediaPlayer2.', '').split('.')[0];
+        const playerName = shortPlayer ? shortPlayer.charAt(0).toUpperCase() + shortPlayer.slice(1) : 'Player';
+        return {
+            name,
+            proxy,
+            status,
+            art,
+            rawTitle,
+            title,
+            artist,
+            xesamUrl,
+            lengthUs,
+            positionUs,
+            playerName,
+            artPath: null,
+        };
+    }
+
     async _updateMediaStatus() {
         if (!this._players) return;
         let anyPlaying = false;
-        let bestArtUrl = null;
+        let anyActive = false;
+        let manualInfo = null;
+        let playingInfo = null;
+        let pausedInfo = null;
+        let fallbackInfo = null;
 
-        for (let [name, item] of this._players) {
-            let proxy = item?.proxy || item;
-            if (!proxy) continue;
+        if (!this._playerArtPaths) this._playerArtPaths = new Map();
+        const perPlayerInfos = [];
+        const preferredName = this._dynamicIsland?._selectedPlayerName || null;
+        const userLocked = Boolean(this._dynamicIsland?._userSelectedPlayer);
+
+        for (const [name, item] of this._players) {
             try {
-                let status = proxy.PlaybackStatus || (proxy.get_cached_property('PlaybackStatus')?.deep_unpack());
-                if (status === 'Playing') {
+                const info = this._extractPlayerState(name, item);
+                if (!info) continue;
+                perPlayerInfos.push(info);
+
+                if (userLocked && name === preferredName) {
+                    manualInfo = info;
+                }
+                if (info.status === 'Playing') {
                     anyPlaying = true;
-                    let metadata = proxy.Metadata || (proxy.get_cached_property('Metadata')?.deep_unpack());
-                    if (metadata) {
-                        let artVal = metadata['mpris:artUrl'] || metadata['xesam:albumArtURL'] || metadata['mpris:artURL'];
-                        if (artVal) {
-                            bestArtUrl = typeof artVal === 'string' ? artVal : (artVal.unpack ? artVal.unpack() : null);
-                        }
-                    }
-                    if (bestArtUrl) break;
+                    anyActive = true;
+                    if (!playingInfo || name === preferredName) playingInfo = info;
+                } else if (info.status === 'Paused') {
+                    anyActive = true;
+                    if (!pausedInfo || name === preferredName) pausedInfo = info;
+                } else if (!fallbackInfo || name === preferredName) {
+                    fallbackInfo = info;
                 }
             } catch (e) { console.log(`AngieBar: Error reading player ${name}: ${e}`); }
         }
 
+        const chosenInfo = manualInfo || playingInfo || pausedInfo || fallbackInfo;
+        const bestInfo = playingInfo || pausedInfo || fallbackInfo;
         this._mediaPlaying = anyPlaying;
+        this._mediaActive = anyActive;
 
-        if (anyPlaying) {
-            if (bestArtUrl) {
-                await this._loadArt(bestArtUrl);
-            } else {
-                if (this._mediaArt) {
-                    this._mediaArt.gicon = Gio.ThemedIcon.new('audio-x-generic-symbolic');
-                    this._mediaArt.show();
-                }
+        // Resolve local/HD art for every active player so stacked slices show their own covers
+        for (const pInfo of perPlayerInfos) {
+            if (pInfo.art || pInfo.title) {
+                const pPath = await this._resolvePlayerArt(pInfo.name, pInfo.art, pInfo.title, pInfo.artist, pInfo.xesamUrl);
+                if (pPath) this._playerArtPaths.set(pInfo.name, pPath);
             }
+            pInfo.artPath = this._playerArtPaths.get(pInfo.name) || null;
+        }
+
+        if (bestInfo && (bestInfo.art || bestInfo.title)) {
+            this._lastArtLocalPath = bestInfo.artPath;
+            this._lastArtUrl = bestInfo.art;
+            this._applySmallMediaArt();
         } else {
-            if (this._mediaArt) this._mediaArt.hide();
+            this._lastArtLocalPath = null;
             this._lastArtUrl = null;
+            this._applySmallMediaArt();
         }
 
         this._updateMediaUI();
+        if (this._dynamicIsland) {
+            this._dynamicIsland.updateFromPlayers({
+                chosen: chosenInfo,
+                allPlayers: perPlayerInfos,
+                totalPlayers: this._players.size,
+            });
+        }
     }
 
-    async _loadArt(url) {
-        if (url === this._lastArtUrl) {
-            if (this._mediaArt) this._mediaArt.show();
-            return;
+    _applySmallMediaArt() {
+        if (!this._mediaArt) return;
+        if (this._lastArtLocalPath && GLib.file_test(this._lastArtLocalPath, GLib.FileTest.EXISTS)) {
+            if (this._mediaArtFallbackIcon) this._mediaArtFallbackIcon.hide();
+            this._mediaArt.set_style(
+                `background-image: url('file://${this._lastArtLocalPath}'); ` +
+                'background-size: cover; background-position: center;'
+            );
+        } else {
+            this._mediaArt.set_style('');
+            if (this._mediaArtFallbackIcon) this._mediaArtFallbackIcon.show();
         }
-        this._lastArtUrl = url;
+    }
 
+    _getArtDimensions(path) {
+        if (!path || !GLib.file_test(path, GLib.FileTest.EXISTS)) return [0, 0];
         try {
-            let localPath = null;
-            if (url.startsWith('file://')) {
+            const [fmt, w, h] = GdkPixbuf.Pixbuf.get_file_info(path);
+            return fmt ? [w, h] : [0, 0];
+        } catch (e) {
+            return [0, 0];
+        }
+    }
+
+    async _resolvePlayerArt(playerName, url, title = '', artist = '', xesamUrl = '') {
+        if (!this._hdArtCache) this._hdArtCache = new Map();
+        const trackKey = `${title}|${artist}|${url || ''}`;
+
+        if (title && this._hdArtCache.has(trackKey)) {
+            const cachedHd = this._hdArtCache.get(trackKey);
+            if (cachedHd && GLib.file_test(cachedHd, GLib.FileTest.EXISTS)) {
+                return cachedHd;
+            }
+        }
+
+        let localPath = null;
+        try {
+            if (url && url.startsWith('file://')) {
                 localPath = GLib.uri_unescape_string(url.substring(7), null);
-            } else if (url.startsWith('http')) {
+            } else if (url && url.startsWith('http')) {
                 let cacheDir = GLib.get_user_cache_dir() + '/angiebar-media';
                 GLib.mkdir_with_parents(cacheDir, 0o755);
                 let hash = GLib.compute_checksum_for_string(GLib.ChecksumType.MD5, url, -1);
@@ -645,19 +809,81 @@ export default class AngieBarExtension extends Extension {
                 }
                 localPath = tempFile.get_path();
             }
+        } catch (e) {
+            localPath = null;
+        }
 
-            if (localPath) {
-                try {
-                    let file = Gio.File.new_for_path(localPath);
-                    if (this._mediaArt) {
-                        this._mediaArt.gicon = new Gio.FileIcon({ file: file });
-                        this._mediaArt.show();
+        if (!localPath || !GLib.file_test(localPath, GLib.FileTest.EXISTS)) {
+            localPath = null;
+        }
+
+        const [w, h] = this._getArtDimensions(localPath);
+        if (title && (w < 400 || h < 220)) {
+            this._upgradeArtToHd(playerName, url, title, artist, xesamUrl, trackKey);
+        }
+        return localPath;
+    }
+
+    async _upgradeArtToHd(playerName, url, title, artist, xesamUrl, trackKey) {
+        if (!title) return;
+        if (!this._hdFetchingKeys) this._hdFetchingKeys = new Set();
+        if (this._hdFetchingKeys.has(trackKey)) return;
+        this._hdFetchingKeys.add(trackKey);
+
+        try {
+            const cacheDir = `${GLib.get_user_cache_dir()}/angiebar-media`;
+            GLib.mkdir_with_parents(cacheDir, 0o755);
+            const hash = GLib.compute_checksum_for_string(GLib.ChecksumType.MD5, `${title}|${artist}`, -1);
+            const hdPath = `${cacheDir}/hd-${hash}.jpg`;
+
+            let [ew] = this._getArtDimensions(hdPath);
+            if (ew < 300) {
+                const query = `${title} ${artist}`.trim();
+                let videoId = null;
+                const ytMatch = (`${xesamUrl} ${url || ''}`).match(/(?:v=|youtu\.be\/|\/vi\/)([a-zA-Z0-9_-]{11})/);
+                if (ytMatch) {
+                    videoId = ytMatch[1];
+                } else {
+                    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+                    const out = await this._execCommandAsync(
+                        `curl -sL --max-time 4 -A "Mozilla/5.0" "${searchUrl}" | grep -oE '"videoId":"[a-zA-Z0-9_-]{11}"' | head -n 1`
+                    );
+                    const m = out.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
+                    if (m) videoId = m[1];
+                }
+
+                if (videoId) {
+                    await this._execCommandAsync(
+                        `curl -sL -f --max-time 4 "https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg" -o "${hdPath}" || ` +
+                        `curl -sL -f --max-time 4 "https://i.ytimg.com/vi/${videoId}/hqdefault.jpg" -o "${hdPath}"`
+                    );
+                }
+
+                [ew] = this._getArtDimensions(hdPath);
+                if (ew < 300) {
+                    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=1`;
+                    const jsonStr = await this._execCommandAsync(`curl -sL --max-time 4 "${itunesUrl}"`);
+                    const artMatch = jsonStr.match(/"artworkUrl100"\s*:\s*"([^"]+)"/);
+                    if (artMatch) {
+                        const hiResUrl = artMatch[1].replace('100x100bb', '600x600bb');
+                        await this._execCommandAsync(`curl -sL -f --max-time 4 "${hiResUrl}" -o "${hdPath}"`);
                     }
-                } catch (err) { if (this._mediaArt) this._mediaArt.hide(); }
-            } else {
-                if (this._mediaArt) this._mediaArt.hide();
+                }
             }
-        } catch (e) { if (this._mediaArt) this._mediaArt.hide(); }
+
+            [ew] = this._getArtDimensions(hdPath);
+            if (ew >= 300) {
+                this._hdArtCache.set(trackKey, hdPath);
+                if (this._playerArtPaths && playerName) {
+                    this._playerArtPaths.set(playerName, hdPath);
+                }
+                this._updateMediaStatus();
+            }
+        } catch (e) {
+            // Keep existing preview on network failure
+        } finally {
+            this._hdFetchingKeys.delete(trackKey);
+        }
     }
 
     _startVisualizer() {
@@ -671,8 +897,7 @@ export default class AngieBarExtension extends Extension {
 
     _stopVisualizer() {
         if (this._visualizerTimerId) {
-            GLib.source_remove(this._visualizerTimerId);
-            this._visualizerTimerId = null;
+            this._clearTimer('_visualizerTimerId');
             if (this._mediaWave) {
                 this._mediaWave.get_children().forEach(dot => { dot.translation_y = 0; });
             }
@@ -681,6 +906,8 @@ export default class AngieBarExtension extends Extension {
 
     _updateMediaUI() {
         if (this._mediaPlaying) {
+            this._applySmallMediaArt();
+            if (this._mediaArt) this._mediaArt.visible = true;
             if (this._mediaWave) this._mediaWave.visible = true;
             if (this._centerIsland) this._centerIsland.add_style_class_name('media-active');
             this._startVisualizer();
@@ -703,52 +930,28 @@ export default class AngieBarExtension extends Extension {
     }
 
     _cleanupObjects() {
-        if (this._avgBox) { try { this._avgBox.destroy(); } catch (e) {} this._avgBox = null; }
-        if (this._avgIcon) { try { this._avgIcon.destroy(); } catch (e) {} this._avgIcon = null; }
-        if (this._avgLabel) { try { this._avgLabel.destroy(); } catch (e) {} this._avgLabel = null; }
-        if (this._batteryBtn) { try { this._batteryBtn.destroy(); } catch (e) {} this._batteryBtn = null; }
-        if (this._batteryIcon) { try { this._batteryIcon.destroy(); } catch (e) {} this._batteryIcon = null; }
-        if (this._batteryLabel) { try { this._batteryLabel.destroy(); } catch (e) {} this._batteryLabel = null; }
-        if (this._chargingIcon) { try { this._chargingIcon.destroy(); } catch (e) {} this._chargingIcon = null; }
-        if (this._btIcon) { try { this._btIcon.destroy(); } catch (e) {} this._btIcon = null; }
-        if (this._volIcon) { try { this._volIcon.destroy(); } catch (e) {} this._volIcon = null; }
-        if (this._wifiIcon) { try { this._wifiIcon.destroy(); } catch (e) {} this._wifiIcon = null; }
-        if (this._quickSettingsBtn) { try { this._quickSettingsBtn.destroy(); } catch (e) {} this._quickSettingsBtn = null; }
-        if (this._separator) { try { this._separator.destroy(); } catch (e) {} this._separator = null; }
-        if (this._camBox) { try { this._camBox.destroy(); } catch (e) {} this._camBox = null; }
-        if (this._micBox) { try { this._micBox.destroy(); } catch (e) {} this._micBox = null; }
-        if (this._privacyIsland) { try { this._privacyIsland.destroy(); } catch (e) {} this._privacyIsland = null; }
-        if (this._centerBoxLayout) { try { this._centerBoxLayout.destroy(); } catch (e) {} this._centerBoxLayout = null; }
-        if (this._centerIsland) { try { this._centerIsland.destroy(); } catch (e) {} this._centerIsland = null; }
-        if (this._timeLabel) { try { this._timeLabel.destroy(); } catch (e) {} this._timeLabel = null; }
-        if (this._mediaArt) { try { this._mediaArt.destroy(); } catch (e) {} this._mediaArt = null; }
-        if (this._mediaWave) { try { this._mediaWave.destroy(); } catch (e) {} this._mediaWave = null; }
-        if (this._cpuIcon) { try { this._cpuIcon.destroy(); } catch (e) {} this._cpuIcon = null; }
-        if (this._cpuIsland) { try { this._cpuIsland.destroy(); } catch (e) {} this._cpuIsland = null; }
-        if (this._cpuLabel) { try { this._cpuLabel.destroy(); } catch (e) {} this._cpuLabel = null; }
-        if (this._ramIcon) { try { this._ramIcon.destroy(); } catch (e) {} this._ramIcon = null; }
-        if (this._ramIsland) { try { this._ramIsland.destroy(); } catch (e) {} this._ramIsland = null; }
-        if (this._ramLabel) { try { this._ramLabel.destroy(); } catch (e) {} this._ramLabel = null; }
-        if (this._downBox) { try { this._downBox.destroy(); } catch (e) {} this._downBox = null; }
-        if (this._downLabel) { try { this._downLabel.destroy(); } catch (e) {} this._downLabel = null; }
-        if (this._upBox) { try { this._upBox.destroy(); } catch (e) {} this._upBox = null; }
-        if (this._upLabel) { try { this._upLabel.destroy(); } catch (e) {} this._upLabel = null; }
-        if (this._netBoxLayout) { try { this._netBoxLayout.destroy(); } catch (e) {} this._netBoxLayout = null; }
-        if (this._netIsland) { try { this._netIsland.destroy(); } catch (e) {} this._netIsland = null; }
-        if (this._logoIcon) { try { this._logoIcon.destroy(); } catch (e) {} this._logoIcon = null; }
-        if (this._logoIsland) { try { this._logoIsland.destroy(); } catch (e) {} this._logoIsland = null; }
-        if (this._powerIsland) { try { this._powerIsland.destroy(); } catch (e) {} this._powerIsland = null; }
-        if (this._rightIsland) { try { this._rightIsland.destroy(); } catch (e) {} this._rightIsland = null; }
-        if (this._workspacesIsland) { try { this._workspacesIsland.destroy(); } catch (e) {} this._workspacesIsland = null; }
-        if (this._todoBoxLayout) { try { this._todoBoxLayout.destroy(); } catch (e) {} this._todoBoxLayout = null; }
-        if (this._todoEntry) { try { this._todoEntry.destroy(); } catch (e) {} this._todoEntry = null; }
-        if (this._todoIsland) { try { this._todoIsland.destroy(); } catch (e) {} this._todoIsland = null; }
-        if (this._todoLabel) { try { this._todoLabel.destroy(); } catch (e) {} this._todoLabel = null; }
-        if (this._todoListContainer) { try { this._todoListContainer.destroy(); } catch (e) {} this._todoListContainer = null; }
-        if (this._tooltipLabel) { try { this._tooltipLabel.destroy(); } catch (e) {} this._tooltipLabel = null; }
-        if (this._uptimeItem) { try { this._uptimeItem.destroy(); } catch (e) {} this._uptimeItem = null; }
-        if (this._logoMenuManager) { try { if (typeof this._logoMenuManager.destroy === 'function') this._logoMenuManager.destroy(); } catch (e) {} this._logoMenuManager = null; }
-        if (this._todoMenuManager) { try { if (typeof this._todoMenuManager.destroy === 'function') this._todoMenuManager.destroy(); } catch (e) {} this._todoMenuManager = null; }
+        const actorProps = [
+            '_avgBox', '_avgIcon', '_avgLabel',
+            '_batteryBtn', '_batteryIcon', '_batteryLabel', '_chargingIcon',
+            '_btIcon', '_volIcon', '_wifiIcon', '_quickSettingsBtn', '_separator',
+            '_camBox', '_micBox', '_privacyIsland',
+            '_centerBoxLayout', '_centerIsland', '_timeLabel',
+            '_mediaArtFallbackIcon', '_mediaArt', '_mediaWave',
+            '_cpuIcon', '_cpuIsland', '_cpuLabel',
+            '_ramIcon', '_ramIsland', '_ramLabel',
+            '_downBox', '_downLabel', '_upBox', '_upLabel', '_netBoxLayout', '_netIsland',
+            '_logoIcon', '_logoIsland', '_powerIsland', '_rightIsland', '_workspacesIsland',
+            '_todoBoxLayout', '_todoIsland', '_todoLabel',
+            '_tooltipLabel', '_uptimeItem', '_logoMenuManager',
+        ];
+        actorProps.forEach(prop => {
+            if (this[prop]) {
+                try {
+                    if (typeof this[prop].destroy === 'function') this[prop].destroy();
+                } catch (e) {}
+                this[prop] = null;
+            }
+        });
     }
 
     disable() {
@@ -770,15 +973,8 @@ export default class AngieBarExtension extends Extension {
         }
         this._settings = null;
 
-        if (this._timeoutId) {
-            GLib.source_remove(this._timeoutId);
-            this._timeoutId = null;
-        }
-
-        if (this._visualizerTimerId) {
-            GLib.source_remove(this._visualizerTimerId);
-            this._visualizerTimerId = null;
-        }
+        this._clearTimer('_timeoutId');
+        this._clearTimer('_visualizerTimerId');
 
         if (this._mprisWatchId) {
             try { this._dbus.signal_unsubscribe(this._mprisWatchId); } catch (e) {}
@@ -809,34 +1005,23 @@ export default class AngieBarExtension extends Extension {
             this._players = null;
         }
 
-        const removeFromBox = (actor, box) => {
-            if (actor && box) {
-                try {
-                    if (actor.get_parent() === box)
-                        box.remove_child(actor);
-                } catch (e) { }
+        const panelPlacements = [
+            [this._workspacesIsland, Main.panel._leftBox],
+            [this._logoIsland, Main.panel._leftBox],
+            [this._privacyIsland, Main.panel._leftBox],
+            [this._netIsland, Main.panel._leftBox],
+            [this._todoIsland, Main.panel._leftBox],
+            [this._centerIsland, Main.panel._centerBox],
+            [this._cpuIsland, Main.panel._rightBox],
+            [this._ramIsland, Main.panel._rightBox],
+            [this._rightIsland, Main.panel._rightBox],
+            [this._powerIsland, Main.panel._rightBox],
+        ];
+        panelPlacements.forEach(([actor, box]) => {
+            if (actor && box && actor.get_parent() === box) {
+                try { box.remove_child(actor); } catch (e) {}
             }
-        };
-
-        removeFromBox(this._workspacesIsland, Main.panel._leftBox);
-        removeFromBox(this._logoIsland, Main.panel._leftBox);
-        removeFromBox(this._privacyIsland, Main.panel._leftBox);
-        removeFromBox(this._netIsland, Main.panel._leftBox);
-        removeFromBox(this._todoIsland, Main.panel._leftBox);
-        removeFromBox(this._centerIsland, Main.panel._centerBox);
-        removeFromBox(this._cpuIsland, Main.panel._rightBox);
-        removeFromBox(this._ramIsland, Main.panel._rightBox);
-        removeFromBox(this._rightIsland, Main.panel._rightBox);
-        removeFromBox(this._powerIsland, Main.panel._rightBox);
-
-        if (this._todoMenu) {
-            if (this._todoMenuManager) {
-                try { this._todoMenuManager.removeMenu(this._todoMenu); } catch (e) {}
-            }
-            try { this._todoMenu.destroy(); } catch (e) {}
-            this._todoMenu = null;
-        }
-        this._todoMenuManager = null;
+        });
 
         if (this._logoMenu) {
             if (this._logoMenuOpenSignal) {
@@ -850,6 +1035,11 @@ export default class AngieBarExtension extends Extension {
             this._logoMenu = null;
         }
         this._logoMenuManager = null;
+
+        if (this._dynamicIsland) {
+            try { this._dynamicIsland.destroy(); } catch (e) {}
+            this._dynamicIsland = null;
+        }
 
         if (this._tooltip) {
             try { Main.layoutManager.removeChrome(this._tooltip); } catch (e) {}
@@ -1188,7 +1378,7 @@ export default class AngieBarExtension extends Extension {
             let [volOut, wifiOut, btOut] = await Promise.all([
                 this._execCommandAsync('wpctl get-volume @DEFAULT_AUDIO_SINK@'),
                 this._execCommandAsync('nmcli -t -f connectivity g'),
-                this._execCommandAsync('rfkill list bluetooth')
+                this._execCommandAsync('rfkill list bluetooth 2>/dev/null')
             ]);
 
             if (volOut && this._volIcon) {
@@ -1290,6 +1480,9 @@ export default class AngieBarExtension extends Extension {
         islands.forEach(island => island?.set_style(`background-color: ${final};`));
 
         this._updateLogoIcon();
+        if (this._dynamicIsland) {
+            this._dynamicIsland.applyTheme();
+        }
     }
 
     _applySecondaryColors() {
@@ -1384,12 +1577,26 @@ export default class AngieBarExtension extends Extension {
 
     async _loadTodos() {
         this._todos = [];
+        this._todoTopics = [];
+        this._todoTopicColors = {};
+        this._todoGoogleLists = {};
+        this._googleSyncStatus = '';
+        this._googleNeedsReauth = false;
         this._todoFilePath = GLib.get_user_config_dir() + '/angiebar-todos.json';
         let legacyPath = GLib.get_user_config_dir() + '/waybar-clone-todos.json';
         try {
             let targetPath = GLib.file_test(this._todoFilePath, GLib.FileTest.EXISTS) ? this._todoFilePath : legacyPath;
             let contents = await this._readFileAsync(targetPath);
-            this._todos = JSON.parse(contents);
+            const parsed = JSON.parse(contents);
+            // New format: { topics: [...], topicColors: {...}, googleLists: {...}, todos: [...] }; legacy format: plain array
+            if (Array.isArray(parsed)) {
+                this._todos = parsed;
+            } else {
+                this._todos = Array.isArray(parsed.todos) ? parsed.todos : [];
+                this._todoTopics = Array.isArray(parsed.topics) ? parsed.topics : [];
+                this._todoTopicColors = (parsed.topicColors && typeof parsed.topicColors === 'object') ? parsed.topicColors : {};
+                this._todoGoogleLists = (parsed.googleLists && typeof parsed.googleLists === 'object') ? parsed.googleLists : {};
+            }
         } catch (e) {
             this._todos = [
                 { text: 'Finish bar setup', done: true },
@@ -1399,116 +1606,381 @@ export default class AngieBarExtension extends Extension {
             await this._saveTodos();
         }
         this._updateTodoUI();
+        if (this._settings?.get_boolean('di-google-tasks-enabled')) {
+            this.syncGoogleTasks();
+        }
     }
 
     async _saveTodos() {
         try {
-            let data = JSON.stringify(this._todos);
+            let data = JSON.stringify({
+                topics: this._todoTopics || [],
+                topicColors: this._todoTopicColors || {},
+                googleLists: this._todoGoogleLists || {},
+                todos: this._todos || [],
+            });
             await this._writeFileAsync(this._todoFilePath, data);
         } catch (e) { }
     }
 
-    _buildTodoMenu() {
-        if (!this._todoMenu) return;
-        this._todoMenu.box.add_style_class_name('todo-popup-box');
-
-        // Header
-        let headerBox = new St.BoxLayout({ style_class: 'todo-header', x_expand: true });
-        let headerTitleBox = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER, style_class: 'todo-header-title-box' });
-        let headerIcon = new St.Icon({ icon_name: 'view-list-symbolic', style_class: 'todo-header-icon' });
-        let headerTitle = new St.Label({ text: 'To-Do List', style_class: 'todo-header-title', y_align: Clutter.ActorAlign.CENTER });
-        headerTitleBox.add_child(headerIcon);
-        headerTitleBox.add_child(headerTitle);
-
-        let clearBtn = new St.Button({ style_class: 'todo-clear-btn', label: 'Clear completed', y_align: Clutter.ActorAlign.CENTER, x_expand: true, x_align: Clutter.ActorAlign.END });
-        this._connect(clearBtn, 'clicked', () => {
-            this._todos = this._todos.filter(t => !t.done);
-            this._saveTodos();
-            this._updateTodoUI();
-        });
-
-        headerBox.add_child(headerTitleBox);
-        headerBox.add_child(clearBtn);
-
-        let headerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
-        headerItem.add_child(headerBox);
-        headerItem.set_style_class_name('todo-menu-item-header');
-        this._todoMenu.addMenuItem(headerItem);
-
-        // Input
-        let inputBox = new St.BoxLayout({ style_class: 'todo-input-box', x_expand: true });
-        this._todoEntry = new St.Entry({ hint_text: 'Add a task...', style_class: 'todo-entry', x_expand: true });
-        let addBtn = new St.Button({ style_class: 'todo-add-btn' });
-        let addIcon = new St.Icon({ icon_name: 'list-add-symbolic', style_class: 'todo-add-icon' });
-        addBtn.set_child(addIcon);
-
-        inputBox.add_child(this._todoEntry);
-        inputBox.add_child(addBtn);
-
-        let addAction = () => {
-            let text = this._todoEntry.get_text().trim();
-            if (text) {
-                this._todos.push({ text: text, done: false });
-                this._todoEntry.set_text('');
-                this._saveTodos();
-                this._updateTodoUI();
-            }
-        };
-        this._connect(addBtn, 'clicked', addAction);
-        this._connect(this._todoEntry.clutter_text, 'activate', addAction);
-
-        let inputItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
-        inputItem.add_child(inputBox);
-        inputItem.set_style_class_name('todo-menu-item-input');
-        this._todoMenu.addMenuItem(inputItem);
-
-        // List container
-        this._todoListContainer = new St.BoxLayout({ vertical: true, style_class: 'todo-list-container' });
-        let listItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
-        listItem.add_child(this._todoListContainer);
-        listItem.set_style_class_name('todo-menu-item-list');
-        this._todoMenu.addMenuItem(listItem);
+    _getHiddenTodoTopicsSet() {
+        try {
+            return new Set(this._settings ? (this._settings.get_strv('di-hidden-todo-topics') || []) : []);
+        } catch (e) {
+            return new Set();
+        }
     }
 
     _updateTodoUI() {
-        if (!this._todoListContainer) return;
-        this._todoListContainer.destroy_all_children();
-        let doneCount = 0;
-
-        this._todos.forEach((task) => {
-            if (task.done) doneCount++;
-
-            let taskBox = new St.BoxLayout({ style_class: 'todo-task-box', reactive: true, track_hover: true });
-            let checkBtn = new St.Button({ style_class: task.done ? 'todo-check-btn checked' : 'todo-check-btn', y_align: Clutter.ActorAlign.CENTER });
-            let checkIcon = new St.Icon({ icon_name: 'object-select-symbolic', style_class: 'todo-check-icon' });
-            if (task.done) checkBtn.set_child(checkIcon);
-
-            let taskLabel = new St.Label({ text: task.text, style_class: task.done ? 'todo-task-label done' : 'todo-task-label', y_align: Clutter.ActorAlign.CENTER, x_expand: true });
-
-            taskBox.add_child(checkBtn);
-            taskBox.add_child(taskLabel);
-
-            this._connect(taskBox, 'button-press-event', () => {
-                task.done = !task.done;
-                this._saveTodos();
-                this._updateTodoUI();
-                return Clutter.EVENT_STOP;
-            });
-
-            this._todoListContainer.add_child(taskBox);
-        });
-
+        const hidden = this._getHiddenTodoTopicsSet();
+        const todos = (this._todos || []).filter(t => !hidden.has(t.topic || 'Generale'));
+        const doneCount = todos.filter(t => t.done).length;
         if (this._todoLabel) {
-            this._todoLabel.set_text(`${this._todos.length - doneCount}/${this._todos.length}`);
+            this._todoLabel.set_text(`${todos.length - doneCount}/${todos.length}`);
         }
+        if (this._dynamicIsland) this._dynamicIsland._refreshTodoUI();
+    }
+
+    _getGoogleAccessTokenAsync() {
+        return new Promise((resolve) => {
+            if (!this._dbus) {
+                resolve({ ok: false, error: 'D-Bus non disponibile' });
+                return;
+            }
+            this._dbus.call(
+                'org.gnome.OnlineAccounts',
+                '/org/gnome/OnlineAccounts',
+                'org.freedesktop.DBus.ObjectManager',
+                'GetManagedObjects',
+                null,
+                null,
+                Gio.DBusCallFlags.NONE,
+                5000,
+                null,
+                (conn, res) => {
+                    try {
+                        const reply = conn.call_finish(res);
+                        const [objects] = reply.deep_unpack();
+                        let googlePath = null;
+                        let email = '';
+                        let attention = false;
+                        for (const [objPath, ifaces] of Object.entries(objects)) {
+                            const acc = ifaces['org.gnome.OnlineAccounts.Account'];
+                            const oauth = ifaces['org.gnome.OnlineAccounts.OAuth2Based'];
+                            if (acc && oauth && acc.ProviderType?.deep_unpack?.() === 'google') {
+                                googlePath = objPath;
+                                email = acc.PresentationIdentity?.deep_unpack?.() || acc.Identity?.deep_unpack?.() || 'Google';
+                                attention = Boolean(acc.AttentionNeeded?.deep_unpack?.());
+                                break;
+                            }
+                        }
+                        if (!googlePath) {
+                            resolve({ ok: false, error: 'Nessun account Google in Account Online' });
+                            return;
+                        }
+                        conn.call(
+                            'org.gnome.OnlineAccounts',
+                            googlePath,
+                            'org.gnome.OnlineAccounts.OAuth2Based',
+                            'GetAccessToken',
+                            null,
+                            null,
+                            Gio.DBusCallFlags.NONE,
+                            6000,
+                            null,
+                            (c2, r2) => {
+                                try {
+                                    const tokReply = c2.call_finish(r2);
+                                    const [accessToken] = tokReply.deep_unpack();
+                                    if (accessToken) {
+                                        resolve({ ok: true, token: accessToken, email });
+                                    } else {
+                                        resolve({ ok: false, email, attentionNeeded: true, error: 'Token vuoto' });
+                                    }
+                                } catch (err2) {
+                                    resolve({ ok: false, email, attentionNeeded: true, error: String(err2.message || err2) });
+                                }
+                            }
+                        );
+                    } catch (err) {
+                        resolve({ ok: false, error: 'Servizio GNOME Online Accounts non raggiungibile' });
+                    }
+                }
+            );
+        });
+    }
+
+    _googleTasksRequestAsync(method, endpoint, bodyObj = null, tokenOverride = null) {
+        return new Promise(async (resolve) => {
+            try {
+                let token = tokenOverride;
+                if (!token) {
+                    const auth = await this._getGoogleAccessTokenAsync();
+                    if (!auth.ok) {
+                        this._googleNeedsReauth = Boolean(auth.attentionNeeded);
+                        this._googleSyncStatus = auth.attentionNeeded
+                            ? `Riautentica ${auth.email || 'Google'} in Impostazioni → Account online`
+                            : (auth.error || 'Errore autenticazione Google');
+                        resolve(null);
+                        return;
+                    }
+                    token = auth.token;
+                }
+                const url = endpoint.startsWith('http')
+                    ? endpoint
+                    : `https://tasks.googleapis.com/tasks/v1${endpoint}`;
+                const argv = [
+                    'curl', '-s', '-m', '12', '-X', method, url,
+                    '-H', `Authorization: Bearer ${token}`,
+                    '-H', 'Content-Type: application/json',
+                ];
+                if (bodyObj !== null) {
+                    argv.push('-d', JSON.stringify(bodyObj));
+                }
+                const proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+                proc.communicate_utf8_async(null, null, (obj, res) => {
+                    try {
+                        const [, stdout] = obj.communicate_utf8_finish(res);
+                        const trimmed = (stdout || '').trim();
+                        if (!trimmed) {
+                            resolve({});
+                            return;
+                        }
+                        resolve(JSON.parse(trimmed));
+                    } catch (e) {
+                        resolve(null);
+                    }
+                });
+            } catch (e) {
+                resolve(null);
+            }
+        });
+    }
+
+    async syncGoogleTasks() {
+        if (!this._settings?.get_boolean('di-google-tasks-enabled')) return false;
+        if (this._googleSyncInProgress) return false;
+        this._googleSyncInProgress = true;
+        try {
+            const auth = await this._getGoogleAccessTokenAsync();
+            if (!auth.ok) {
+                this._googleNeedsReauth = Boolean(auth.attentionNeeded);
+                this._googleSyncStatus = auth.attentionNeeded
+                    ? `Riautentica ${auth.email || 'Google'} in Account Online`
+                    : (auth.error || 'Account Google non collegato');
+                this._updateTodoUI();
+                return false;
+            }
+            this._googleNeedsReauth = false;
+            const token = auth.token;
+            const listsRes = await this._googleTasksRequestAsync('GET', '/users/@me/lists?maxResults=100', null, token);
+            if (!listsRes || listsRes.error || !Array.isArray(listsRes.items)) {
+                this._googleSyncStatus = listsRes?.error?.message || 'Errore lettura elenchi Google Tasks';
+                this._updateTodoUI();
+                return false;
+            }
+
+            if (!this._todoGoogleLists || typeof this._todoGoogleLists !== 'object') {
+                this._todoGoogleLists = {};
+            }
+            if (!Array.isArray(this._todoTopics)) {
+                this._todoTopics = [];
+            }
+
+            const remoteLists = listsRes.items;
+            const remoteById = new Map(remoteLists.map(l => [l.id, l.title]));
+
+            // 1. Handle local topics that were previously linked to a Google list ID
+            for (const [localTopic, gId] of Object.entries({ ...this._todoGoogleLists })) {
+                if (!remoteById.has(gId)) {
+                    // Deleted on Google Tasks
+                    delete this._todoGoogleLists[localTopic];
+                    this._todoTopics = this._todoTopics.filter(t => t !== localTopic);
+                    this._todos = (this._todos || []).filter(t => (t.topic || 'Generale') !== localTopic);
+                } else {
+                    const remoteTitle = remoteById.get(gId);
+                    if (remoteTitle && remoteTitle !== localTopic) {
+                        // Renamed on Google Tasks
+                        delete this._todoGoogleLists[localTopic];
+                        this._todoGoogleLists[remoteTitle] = gId;
+                        this._todoTopics = this._todoTopics.map(t => (t === localTopic ? remoteTitle : t));
+                        if (this._todoTopicColors && this._todoTopicColors[localTopic]) {
+                            this._todoTopicColors[remoteTitle] = this._todoTopicColors[localTopic];
+                            delete this._todoTopicColors[localTopic];
+                        }
+                        (this._todos || []).forEach(t => {
+                            if ((t.topic || 'Generale') === localTopic) t.topic = remoteTitle;
+                        });
+                    }
+                }
+            }
+
+            // 2. Add all remote lists from Google Tasks
+            for (const rList of remoteLists) {
+                const title = (rList.title || 'Attività').trim();
+                if (!this._todoTopics.includes(title)) {
+                    this._todoTopics.push(title);
+                }
+                this._todoGoogleLists[title] = rList.id;
+            }
+
+            // 3. Push any local-only topics to Google Tasks
+            for (const topic of [...this._todoTopics]) {
+                if (!this._todoGoogleLists[topic]) {
+                    const created = await this._googleTasksRequestAsync('POST', '/users/@me/lists', { title: topic }, token);
+                    if (created && created.id) {
+                        this._todoGoogleLists[topic] = created.id;
+                    }
+                }
+            }
+
+            // 4. Sync tasks inside each linked list
+            const newAllTodos = [];
+            for (const topic of this._todoTopics) {
+                const listId = this._todoGoogleLists[topic];
+                const localTasks = (this._todos || []).filter(t => (t.topic || 'Generale') === topic);
+                if (!listId) {
+                    newAllTodos.push(...localTasks);
+                    continue;
+                }
+                // Push unlinked local tasks first
+                for (const lt of localTasks) {
+                    if (!lt.googleId) {
+                        const createdTask = await this._googleTasksRequestAsync(
+                            'POST',
+                            `/lists/${encodeURIComponent(listId)}/tasks`,
+                            { title: lt.text, status: lt.done ? 'completed' : 'needsAction' },
+                            token
+                        );
+                        if (createdTask && createdTask.id) {
+                            lt.googleId = createdTask.id;
+                        }
+                    }
+                }
+                // Fetch all tasks in the list from Google Tasks
+                const tasksRes = await this._googleTasksRequestAsync(
+                    'GET',
+                    `/lists/${encodeURIComponent(listId)}/tasks?showCompleted=true&showHidden=true&maxResults=100`,
+                    null,
+                    token
+                );
+                if (tasksRes && Array.isArray(tasksRes.items)) {
+                    for (const rt of tasksRes.items) {
+                        if (rt.deleted) continue;
+                        const title = (rt.title || '').trim();
+                        if (!title) continue;
+                        newAllTodos.push({
+                            text: title,
+                            done: rt.status === 'completed',
+                            topic,
+                            googleId: rt.id,
+                        });
+                    }
+                } else {
+                    newAllTodos.push(...localTasks);
+                }
+            }
+
+            this._todos = newAllTodos;
+            this._googleSyncStatus = `Sincronizzato con ${auth.email}`;
+            await this._saveTodos();
+            this._updateTodoUI();
+            return true;
+        } catch (e) {
+            this._googleSyncStatus = 'Errore sincronizzazione Google Tasks';
+            this._updateTodoUI();
+            return false;
+        } finally {
+            this._googleSyncInProgress = false;
+        }
+    }
+
+    async createGoogleTopicAsync(topic) {
+        if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
+        if (!this._todoGoogleLists) this._todoGoogleLists = {};
+        if (this._todoGoogleLists[topic]) return;
+        const created = await this._googleTasksRequestAsync('POST', '/users/@me/lists', { title: topic });
+        if (created && created.id) {
+            this._todoGoogleLists[topic] = created.id;
+            await this._saveTodos();
+        }
+    }
+
+    async deleteGoogleTopicAsync(topic, listId) {
+        if (!this._settings?.get_boolean('di-google-tasks-enabled') || !listId) return;
+        await this._googleTasksRequestAsync('DELETE', `/users/@me/lists/${encodeURIComponent(listId)}`);
+    }
+
+    async createGoogleTaskAsync(task) {
+        if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
+        const topic = task.topic || 'Generale';
+        if (!this._todoGoogleLists) this._todoGoogleLists = {};
+        let listId = this._todoGoogleLists[topic];
+        if (!listId) {
+            const createdList = await this._googleTasksRequestAsync('POST', '/users/@me/lists', { title: topic });
+            if (createdList && createdList.id) {
+                listId = createdList.id;
+                this._todoGoogleLists[topic] = listId;
+            }
+        }
+        if (!listId) return;
+        const createdTask = await this._googleTasksRequestAsync(
+            'POST',
+            `/lists/${encodeURIComponent(listId)}/tasks`,
+            { title: task.text, status: task.done ? 'completed' : 'needsAction' }
+        );
+        if (createdTask && createdTask.id) {
+            task.googleId = createdTask.id;
+            await this._saveTodos();
+        }
+    }
+
+    async updateGoogleTaskAsync(task) {
+        if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
+        const topic = task.topic || 'Generale';
+        const listId = this._todoGoogleLists?.[topic];
+        if (!listId || !task.googleId) return;
+        await this._googleTasksRequestAsync(
+            'PATCH',
+            `/lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(task.googleId)}`,
+            {
+                id: task.googleId,
+                title: task.text,
+                status: task.done ? 'completed' : 'needsAction',
+            }
+        );
+    }
+
+    async deleteGoogleTaskAsync(topic, googleId) {
+        if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
+        const listId = this._todoGoogleLists?.[topic || 'Generale'];
+        if (!listId || !googleId) return;
+        await this._googleTasksRequestAsync(
+            'DELETE',
+            `/lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(googleId)}`
+        );
+    }
+
+    async clearCompletedGoogleTasksAsync(topic) {
+        if (!this._settings?.get_boolean('di-google-tasks-enabled')) return;
+        const listId = this._todoGoogleLists?.[topic || 'Generale'];
+        if (!listId) return;
+        await this._googleTasksRequestAsync('POST', `/lists/${encodeURIComponent(listId)}/clear`);
     }
 
     _buildLogoMenu() {
         if (!this._logoMenu) return;
         this._logoMenu.removeAll();
 
-        // 1. Impostazioni
-        let settingsItem = new PopupMenu.PopupMenuItem('Impostazioni');
+        // 0. Impostazioni AngieBar & Dynamic Island
+        let angiePrefsItem = new PopupMenu.PopupMenuItem('Impostazioni AngieBar');
+        this._connect(angiePrefsItem, 'activate', () => {
+            try { this.openPreferences(); } catch (e) {}
+        });
+        this._logoMenu.addMenuItem(angiePrefsItem);
+
+        // 1. Impostazioni di Sistema
+        let settingsItem = new PopupMenu.PopupMenuItem('Impostazioni di Sistema');
         this._connect(settingsItem, 'activate', () => {
             GLib.spawn_command_line_async('gnome-control-center');
         });

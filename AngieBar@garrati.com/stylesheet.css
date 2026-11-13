@@ -380,146 +380,1435 @@ StButton.custom-island:hover {
     icon-size: 16px;
 }
 
-
-
 /* =========================================
-   9. TODO POPUP MENU
+   10. EXPANDED DYNAMIC ISLAND (Minimal & Tondo)
    ========================================= */
-.todo-menu-item-header,
-.todo-menu-item-input,
-.todo-menu-item-list {
-    background-color: transparent !important;
+.custom-island.island-expanded-open {
+    border-color: transparent !important;
+    border-width: 0px !important;
+    box-shadow: none !important;
 }
 
-.todo-menu-item-header:hover,
-.todo-menu-item-input:hover,
-.todo-menu-item-list:hover,
-.todo-menu-item-header:active,
-.todo-menu-item-input:active,
-.todo-menu-item-list:active {
-    background-color: transparent !important;
-}
-
-.todo-popup-box {
-    width: 320px;
-    padding: 12px;
-}
-
-.todo-header {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.todo-header-title-box {
-    spacing: 8px;
-}
-
-.todo-header-title {
-    font-size: 16px;
-    font-weight: bold;
-    color: #cdd6f4;
-}
-
-.todo-header-icon {
-    icon-size: 16px;
-    color: #cdd6f4;
-}
-
-.todo-clear-btn {
-    color: #f38ba8;
-    font-size: 12px;
+/* Compact Pomodoro badge inside closed center island */
+.di-compact-pomo {
+    spacing: 5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: rgba(53, 132, 228, 0.16);
+    border: 1px solid transparent;
     transition-duration: 200ms;
 }
 
-.todo-clear-btn:hover {
-    color: #ff9fb4;
+.di-compact-pomo-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #3584e4;
+    transition-duration: 200ms;
 }
 
-.todo-input-box {
+.di-compact-pomo-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: #3584e4;
+}
+
+/* Floating Rounded Expanded Island Container (Android 17 / Pixel M3 Expressive) */
+.di-expanded-island {
+    width: 550px;
+    min-height: 215px;
+    background-color: rgba(26, 28, 32, 0.97);
+    border-width: 0px;
+    border-color: transparent;
+    border-radius: 28px;
+    padding: 8px 14px 14px 14px;
+    box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-family: inherit;
+}
+
+/* Header Bar (Pill Tabs on Left, Status on Right) */
+.di-header {
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    spacing: 4px;
+}
+
+.di-tabs-bar {
+    spacing: 4px;
     background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 6px 12px;
-    margin-bottom: 16px;
+    border-radius: 999px;
+    padding: 3px;
 }
 
-.todo-entry {
+.di-tab-btn {
+    padding: 5px 10px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.6);
     background-color: transparent;
-    border: none;
-    box-shadow: none;
-    color: #bac2de;
-    font-size: 14px;
-    caret-color: #cdd6f4;
+    transition-duration: 150ms;
 }
 
-.todo-entry:focus {
+.di-tab-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.09);
+}
+
+.di-tab-btn.active {
+    color: #ffffff;
+    background-color: rgba(53, 132, 228, 0.24);
+    padding: 5px 12px;
+}
+
+.di-tab-box {
+    spacing: 6px;
+}
+
+.di-tab-icon {
+    color: inherit;
+}
+
+.di-tab-btn.active .di-tab-icon {
+    color: #3584e4;
+}
+
+.di-tab-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: inherit;
+}
+
+.di-header-status {
+    spacing: 6px;
+}
+
+.di-header-pomo-pill {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background-color: rgba(53, 132, 228, 0.2);
+}
+
+.di-header-pomo-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #3584e4;
+}
+
+.di-header-clock {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0 4px;
+}
+
+.di-header-icon-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 13px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    transition-duration: 140ms;
+}
+
+.di-header-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.di-header-icon-btn.pinned {
+    background-color: rgba(53, 132, 228, 0.28);
+    color: #3584e4;
+}
+
+.di-content-area {
+}
+
+/* AI mode: only the composer pill is visible */
+.di-expanded-island.di-ai-mode {
+    width: 500px;
+    min-height: 0px;
+    padding: 0px;
     background-color: transparent;
-    border: none;
     box-shadow: none;
 }
 
-.todo-add-btn {
-    width: 24px;
-    height: 24px;
-    border-radius: 12px;
-    background-color: #89b4fa;
-    margin-left: 8px;
-    transition-duration: 200ms;
+
+.di-page {
+    padding: 2px 0px 0px 0px;
 }
 
-.todo-add-btn:hover {
-    background-color: #b4befe;
-}
-
-.todo-add-icon {
-    icon-size: 14px;
-    color: #11111b;
-}
-
-.todo-list-container {
+/* ── Page 1: Musica (Android 17 / Pixel Media Card + Multi-Stream Slices) ── */
+.di-music-page {
+    padding: 0;
     spacing: 8px;
 }
 
-.todo-task-box {
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+.di-music-card {
+    border-radius: 22px;
+    background-color: rgba(255, 255, 255, 0.06);
+    background-size: cover;
+    background-position: center;
+}
+
+.di-music-slices-box {
+    spacing: 6px;
+}
+
+.di-music-slice {
+    width: 48px;
+    border-radius: 22px;
+    background-color: rgba(255, 255, 255, 0.08);
+    background-size: cover;
+    background-position: center;
+    transition-duration: 160ms;
+}
+
+.di-music-slice:hover {
+    width: 54px;
+}
+
+.di-music-slice-scrim {
+    border-radius: 22px;
+    background-color: rgba(12, 14, 18, 0.36);
+    transition-duration: 160ms;
+}
+
+.di-music-slice:hover .di-music-slice-scrim {
+    background-color: rgba(12, 14, 18, 0.12);
+}
+
+.di-music-slice-icon {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.di-music-scrim {
+    border-radius: 22px;
+    padding: 12px 16px;
+    spacing: 8px;
+    background-color: rgba(24, 26, 30, 0.35);
+}
+
+.di-music-scrim.has-art {
+    background-color: rgba(14, 16, 20, 0.56);
+}
+
+.di-music-top-row {
+    spacing: 8px;
+}
+
+.di-music-app-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 13px;
+    background-color: #3584e4;
+    color: #ffffff;
+    transition-duration: 150ms;
+}
+
+.di-music-app-badge:hover {
+    background-color: #5a9cf8;
+}
+
+.di-music-app-badge-icon {
+    color: #ffffff;
+}
+
+.di-music-player-pill {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background-color: #3584e4;
+    color: #ffffff;
+    transition-duration: 150ms;
+}
+
+.di-music-player-pill:hover {
+    background-color: #5a9cf8;
+}
+
+.di-music-player-pill-box {
+    spacing: 5px;
+}
+
+.di-music-player-icon {
+    color: #ffffff;
+}
+
+.di-music-player-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.di-music-mid-row {
+    spacing: 14px;
+    padding: 2px 0;
+}
+
+.di-music-text-col {
+    spacing: 2px;
+}
+
+.di-music-title {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.di-music-artist {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+/* Pixel Squircle Play/Pause Button */
+.di-play-btn {
+    width: 56px;
+    height: 40px;
+    border-radius: 14px;
+    background-color: #3584e4;
+    color: #ffffff;
+    transition-duration: 150ms;
+}
+
+.di-play-btn:hover {
+    background-color: #5a9cf8;
+    color: #ffffff;
+}
+
+.di-music-bottom-row {
+    spacing: 10px;
+}
+
+.di-music-scrubber {
+    height: 20px;
+}
+
+.di-transport-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background-color: transparent;
+    color: rgba(255, 255, 255, 0.92);
+    transition-duration: 140ms;
+}
+
+.di-transport-btn:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+/* Pixel Inline Audio Output Device Selector */
+.di-output-scroll {
+    margin-top: 2px;
+}
+
+.di-output-list {
+    spacing: 5px;
+    padding: 2px 0;
+}
+
+.di-output-item {
+    padding: 7px 12px;
     border-radius: 12px;
-    padding: 10px 12px;
-    spacing: 12px;
-    transition-duration: 200ms;
+    background-color: rgba(20, 22, 26, 0.72);
+    color: rgba(255, 255, 255, 0.9);
+    transition-duration: 140ms;
 }
 
-.todo-task-box:hover {
+.di-output-item:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+}
+
+.di-output-item.active {
+    background-color: rgba(53, 132, 228, 0.88);
+    color: #ffffff;
+}
+
+.di-output-item-box {
+    spacing: 10px;
+}
+
+.di-output-item-icon {
+    color: inherit;
+}
+
+.di-output-item-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: inherit;
+}
+
+.di-output-item-check {
+    color: #ffffff;
+}
+
+/* ── Page 2: Clipboard ── */
+.di-clipboard-page {
+    spacing: 10px;
+}
+
+.di-clip-topbar {
+    spacing: 6px;
+}
+
+.di-search-pill {
     background-color: rgba(255, 255, 255, 0.07);
+    border: none;
+    border-radius: 10px;
+    padding: 4px 12px;
+    spacing: 6px;
 }
 
-.todo-check-btn {
+.di-search-icon {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.di-search-entry,
+.di-search-entry:focus {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+    font-size: 12px;
+    padding: 0;
+    min-height: 18px;
+    caret-color: #3584e4;
+}
+
+.di-filter-pill {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
+    background-color: rgba(255, 255, 255, 0.06);
+    transition-duration: 140ms;
+}
+
+.di-filter-pill:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.11);
+}
+
+.di-filter-pill.active {
+    color: #ffffff;
+    background-color: #3584e4;
+}
+
+.di-clip-scroll {
+    -st-hfade-offset: 16px;
+}
+
+.di-clip-strip {
+    spacing: 8px;
+    padding: 2px 0;
+}
+
+.di-clip-card {
+    width: 152px;
+    height: 92px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 8px 10px;
+    spacing: 4px;
+    transition-duration: 150ms;
+}
+
+.di-clip-card:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(53, 132, 228, 0.4);
+}
+
+.di-clip-card.pinned {
+    border-color: rgba(53, 132, 228, 0.5);
+    background-color: rgba(53, 132, 228, 0.1);
+}
+
+.di-clip-card-head {
+    spacing: 4px;
+}
+
+.di-clip-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.di-clip-badge.link {
+    color: #3584e4;
+    background-color: rgba(53, 132, 228, 0.16);
+}
+
+.di-clip-badge.code {
+    color: #f9e2af;
+    background-color: rgba(249, 226, 175, 0.14);
+}
+
+.di-clip-badge.screenshot {
+    color: #ffffff;
+    background-color: rgba(53, 132, 228, 0.36);
+}
+
+.di-clip-badge.file {
+    color: #ffffff;
+    background-color: rgba(58, 148, 74, 0.36);
+}
+
+.di-clip-badge.copied {
+    color: #ffffff !important;
+    background-color: #3a944a !important;
+}
+
+.di-add-file-pill {
+    color: #ffffff;
+    background-color: rgba(53, 132, 228, 0.24);
+}
+
+.di-add-file-pill:hover {
+    background-color: #3584e4;
+}
+
+.di-clip-drop-banner {
+    padding: 5px 12px;
+    border-radius: 10px;
+    background-color: rgba(53, 132, 228, 0.26);
+    border: 1px solid rgba(53, 132, 228, 0.65);
+}
+
+.di-clip-drop-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.di-clip-shot-thumb {
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.di-clip-file-box {
+    spacing: 8px;
+    padding: 2px 0;
+}
+
+.di-clip-file-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.di-clip-file-icon {
+    color: #3584e4;
+}
+
+.di-clip-file-name {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.di-clip-file-sub {
+    font-size: 9.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.di-clip-mini-btn {
     width: 20px;
     height: 20px;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
     background-color: transparent;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.di-clip-mini-btn:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.di-clip-body-btn {
+    padding: 2px 0 0 0;
+}
+
+.di-clip-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.di-clip-text.code {
+    font-family: 'JetBrains Mono', monospace;
+    color: #f9e2af;
+}
+
+.di-empty-box {
+    spacing: 4px;
+    padding-top: 14px;
+}
+
+.di-empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.di-empty-sub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Page 3: Timer Pomodoro (Android 17 / Pixel M3 Expressive Card) ── */
+.di-pomo-page {
+    padding: 0;
+}
+
+.di-pomo-card {
+    border-radius: 22px;
+    padding: 12px 16px;
+    spacing: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
     transition-duration: 200ms;
 }
 
-.todo-check-btn.checked {
-    background-color: #cba6f7;
-    border-color: #cba6f7;
+.di-pomo-top-row {
+    spacing: 8px;
 }
 
-.todo-check-icon {
-    icon-size: 12px;
-    color: #11111b;
+.di-pomo-phase-pills {
+    spacing: 3px;
+    padding: 3px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.07);
 }
 
-.todo-task-label {
-    font-size: 14px;
-    color: #cdd6f4;
-    transition-duration: 200ms;
+.di-pomo-phase-btn {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    background-color: transparent;
+    transition-duration: 140ms;
 }
 
-.todo-task-label.done {
-    color: #6c7086;
-    text-decoration-line: line-through;
+.di-pomo-phase-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.di-pomo-phase-btn.active {
+    color: #ffffff;
+    background-color: #3584e4;
+}
+
+.di-pomo-steppers-row {
+    spacing: 6px;
+}
+
+.di-stepper-pill {
+    background-color: rgba(255, 255, 255, 0.07);
+    border: none;
+    border-radius: 999px;
+    padding: 3px 8px;
+    spacing: 4px;
+}
+
+.di-stepper-title {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    padding-right: 2px;
+}
+
+.di-stepper-val {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #ffffff;
+    min-width: 26px;
+    text-align: center;
+}
+
+.di-stepper-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.di-stepper-btn:hover {
+    background-color: #3584e4;
+    color: #ffffff;
+}
+
+.di-pomo-mid-row {
+    spacing: 12px;
+    padding: 2px 0;
+}
+
+.di-pomo-time-col {
+    spacing: 1px;
+}
+
+.di-pomo-time {
+    font-size: 34px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.di-pomo-meta-row {
+    spacing: 5px;
+}
+
+.di-pomo-phase {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3584e4;
+}
+
+.di-pomo-sessions {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.di-pomo-actions-row {
+    spacing: 8px;
+}
+
+.di-pomo-addmin-pill {
+    padding: 8px 13px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    transition-duration: 140ms;
+}
+
+.di-pomo-addmin-pill:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+.di-pomo-reset-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 19px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transition-duration: 140ms;
+}
+
+.di-pomo-reset-btn:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Pixel Squircle Start/Pause Button */
+.di-pomo-start-pill {
+    width: 58px;
+    height: 40px;
+    border-radius: 14px;
+    background-color: #3584e4;
+    color: #ffffff;
+    box-shadow: none;
+    transition-duration: 150ms;
+}
+
+.di-pomo-start-pill:hover {
+    background-color: #5a9cf8;
+}
+
+.di-pomo-bot-row {
+    padding-top: 2px;
+}
+
+.di-pomo-scrubber {
+    height: 18px;
+}
+
+/* ── Page 4: AI Assistant ── */
+.di-ai-page {
+    spacing: 8px;
+}
+
+.di-ai-bot-col {
+    width: 82px;
+    spacing: 6px;
+    background-color: transparent;
+    border: none;
+    border-radius: 14px;
+    padding: 8px 6px;
+}
+
+.di-ai-bot-status {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.di-ai-chat-col {
+    spacing: 8px;
+}
+
+.di-ai-scroll {
+    background-color: transparent;
+}
+
+.di-ai-chat-list {
+    spacing: 6px;
+    padding-right: 4px;
+}
+
+.di-ai-welcome {
+    spacing: 8px;
+    padding-top: 10px;
+}
+
+.di-ai-welcome-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.di-ai-chips-row {
+    spacing: 6px;
+}
+
+.di-ai-chip {
+    padding: 5px 11px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.07);
+    border: none;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 500;
+    transition-duration: 140ms;
+}
+
+.di-ai-chip:hover {
+    background-color: rgba(53, 132, 228, 0.25);
+    color: #ffffff;
+}
+
+.di-ai-bubble {
+    padding: 8px 14px;
+    border-radius: 16px;
+    max-width: 440px;
+    spacing: 6px;
+}
+
+.di-ai-bubble.user {
+    background-color: #3584e4;
+    border: none;
+    color: #ffffff;
+}
+
+.di-ai-bubble.ai {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: none;
+}
+
+.di-ai-bubble-text {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.di-ai-bubble-text.user {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.di-ai-bubble-text.ai {
+    color: #ffffff;
+}
+
+/* Code blocks in AI responses with one-click copy */
+.di-ai-code-box {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    background-color: rgba(14, 16, 24, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 7px 11px 8px 11px;
+    spacing: 4px;
+}
+
+.di-ai-code-header {
+    spacing: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.di-ai-code-lang {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.5px;
+}
+
+.di-ai-code-copy-btn {
+    padding: 2px 10px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.09);
+    color: rgba(255, 255, 255, 0.90);
+    font-size: 10px;
+    font-weight: 600;
+    border: none;
+    transition-duration: 120ms;
+}
+
+.di-ai-code-copy-btn:hover {
+    background-color: #3584e4;
+    color: #ffffff;
+}
+
+.di-ai-code-copy-btn.copied {
+    background-color: #2ec27e;
+    color: #ffffff;
+}
+
+.di-ai-code-text {
+    font-family: 'JetBrainsMono Nerd Font', 'Monospace', monospace;
+    font-size: 11px;
+    color: #8ff0a4;
+    padding-top: 3px;
+}
+
+.di-ai-provider-bar {
+    spacing: 4px;
+    padding-bottom: 2px;
+}
+
+.di-ai-provider-pill {
+    padding: 2px 9px;
+    border-radius: 7px;
+    background-color: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 10px;
+    font-weight: 600;
+    border: none;
+}
+
+.di-ai-provider-pill:hover {
+    background-color: rgba(255, 255, 255, 0.13);
+    color: #ffffff;
+}
+
+.di-ai-provider-pill.active {
+    background-color: #3584e4;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Gemini-style composer pill */
+.di-ai-composer {
+    min-height: 46px;
+    border-radius: 24px;
+    background-color: rgba(28, 29, 38, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+}
+
+.di-ai-composer.thinking {
+    border: 1px solid rgba(170, 160, 255, 0.25);
+}
+
+.di-ai-composer-row {
+    padding: 4px 6px 4px 8px;
+    spacing: 8px;
+}
+
+.di-ai-orb {
+    width: 30px;
+    height: 30px;
+}
+
+.di-ai-entry,
+.di-ai-entry:focus {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+    font-size: 13px;
+    padding: 0;
+    min-height: 22px;
+    caret-color: #a9a2ff;
+}
+
+.di-ai-think-label {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 13px;
+    font-weight: 500;
+    padding-left: 2px;
+}
+
+.di-ai-send-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    background-color: rgba(255, 255, 255, 0.10);
+    color: #ffffff;
+    box-shadow: none;
+    transition-duration: 140ms;
+}
+
+.di-ai-send-btn:hover {
+    background-color: #3584e4;
+}
+
+.di-ai-stop-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    background-color: rgba(120, 130, 170, 0.55);
+    transition-duration: 140ms;
+}
+
+.di-ai-stop-btn:hover {
+    background-color: rgba(150, 160, 205, 0.75);
+}
+
+.di-ai-stop-square {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 2px solid rgba(255, 255, 255, 0.92);
+}
+
+.di-ai-newchat {
+    background-color: transparent;
+}
+
+/* ── Page 5: Calendario ── */
+.di-calendar-page {
+    spacing: 16px;
+}
+
+.di-cal-month-col {
+    width: 196px;
+    spacing: 2px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 6px 10px;
+}
+
+.di-cal-month-head {
+    padding-bottom: 2px;
+}
+
+.di-cal-month-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #3584e4;
+}
+
+.di-cal-nav-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    color: #ffffff;
+}
+
+.di-cal-nav-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.di-cal-weekdays {
+    spacing: 2px;
+}
+
+.di-cal-weekday {
+    width: 24px;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+.di-cal-grid {
+    spacing: 1px;
+}
+
+.di-cal-week-row {
+    spacing: 2px;
+}
+
+.di-cal-day-empty {
+    width: 24px;
+    height: 17px;
+}
+
+.di-cal-day-btn {
+    width: 24px;
+    height: 17px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #ffffff;
+    padding: 0;
+    transition-duration: 120ms;
+}
+
+.di-cal-day-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.di-cal-day-btn.selected {
+    background-color: rgba(53, 132, 228, 0.25);
+    color: #ffffff;
+}
+
+.di-cal-day-btn.today {
+    background-color: #3584e4;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.di-cal-day-btn.has-events {
+    border-bottom: 2px solid #3584e4;
+}
+
+.di-cal-agenda-col {
+    spacing: 6px;
+}
+
+.di-cal-agenda-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.di-cal-events-scroll {
+    -st-vfade-offset: 12px;
+}
+
+.di-cal-events-list {
+    spacing: 5px;
+}
+
+.di-cal-empty-label {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.5);
+    padding-top: 12px;
+}
+
+.di-cal-event-pill {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: none;
+    border-radius: 8px;
+    padding: 4px 10px;
+    spacing: 8px;
+}
+
+.di-cal-event-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #3584e4;
+}
+
+.di-cal-event-dot.system {
+    background-color: #3584e4;
+}
+
+.di-cal-event-time {
+    font-size: 11px;
+    font-weight: 600;
+    color: #3584e4;
+}
+
+.di-cal-event-title {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.di-cal-add-row {
+    background-color: rgba(255, 255, 255, 0.07);
+    border: none;
+    border-radius: 10px;
+    padding: 3px 4px 3px 12px;
+    spacing: 6px;
+}
+
+.di-cal-add-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    background-color: #3584e4;
+    color: #ffffff;
+}
+
+.di-cal-add-btn:hover {
+    background-color: #5a9cf8;
+}
+
+/* ── Page: To-Do ── */
+.di-todo-page { spacing: 6px; }
+.di-todo-scroll { margin-top: 2px; }
+.di-todo-list { spacing: 3px; padding-right: 4px; }
+.di-todo-row {
+    border-radius: 9px;
+    padding: 4px 8px;
+    spacing: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+.di-todo-row:hover { background-color: rgba(255, 255, 255, 0.1); }
+.di-todo-toggle { padding: 0; background: none; }
+.di-todo-body { spacing: 8px; }
+.di-todo-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+}
+.di-todo-check.checked {
+    background-color: #3584e4;
+    border-color: #3584e4;
+    color: #ffffff;
+}
+.di-todo-label { font-size: 12px; color: #ffffff; }
+.di-todo-label.done { color: rgba(255, 255, 255, 0.45); text-decoration: line-through; }
+
+/* ── Page: Notifiche ── */
+.di-notif-page { spacing: 6px; }
+.di-notif-title { font-size: 13px; font-weight: 600; color: #ffffff; }
+.di-notif-list { spacing: 4px; padding-right: 4px; }
+.di-notif-row {
+    border-radius: 10px;
+    padding: 6px 10px;
+    spacing: 10px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: none;
+}
+.di-notif-row:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.di-notif-icon { color: #ffffff; }
+.di-notif-app { font-size: 10px; font-weight: 600; color: rgba(255, 255, 255, 0.5); }
+.di-notif-time { font-size: 10px; color: rgba(255, 255, 255, 0.45); }
+.di-notif-summary { font-size: 12px; font-weight: 600; color: #ffffff; }
+.di-notif-body { font-size: 11px; color: rgba(255, 255, 255, 0.68); }
+
+/* Header: date/time centered on top, tabs row below */
+.di-header-clock-row { min-height: 26px; padding-bottom: 2px; }
+.di-header-center-clock { font-weight: 700; }
+.di-header-tools-row { spacing: 8px; }
+
+/* TODO TOPICS (folders) */
+.di-todo-topic-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 0 6px 0 2px;
+    max-width: 140px;
+}
+.di-todo-topic-icon { color: -st-accent-color; }
+.di-todo-topic-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    padding-right: 4px;
+}
+.di-todo-topic-row .di-todo-label { font-weight: 600; }
+.di-todo-color-picker {
+    spacing: 8px;
+    padding: 5px 10px;
+    margin: 2px 0 4px 0;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+}
+.di-todo-color-swatch {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    border-radius: 99px;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    padding: 0;
+}
+.di-todo-color-swatch:hover {
+    border: 2px solid #ffffff;
+}
+.di-todo-color-swatch.selected {
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+.di-todo-google-banner {
+    background-color: rgba(245, 194, 17, 0.16);
+    border: 1px solid rgba(245, 194, 17, 0.45);
+    border-radius: 10px;
+    padding: 4px 10px;
+    margin-bottom: 4px;
+}
+.di-todo-google-banner:hover {
+    background-color: rgba(245, 194, 17, 0.26);
+}
+.di-todo-google-banner-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #f5c211;
+}
+
+/* AI pill: answer area + new chat button */
+.di-ai-composer {
+    border-radius: 24px;
+}
+
+.di-ai-scroll {
+    max-height: 240px;
+    padding: 12px 14px 2px 14px;
+}
+
+.di-ai-new-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    background-color: transparent;
+    color: #ffffff;
+}
+
+.di-ai-new-btn:hover {
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+.di-ai-back-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+}
+
+.di-ai-back-btn:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+/* AI permission request */
+.di-ai-perm-box {
+    padding: 12px 16px 4px 16px;
+    spacing: 6px;
+}
+
+.di-ai-perm-title {
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.di-ai-perm-cmd {
+    font-family: 'JetBrainsMono Nerd Font', 'Monospace', monospace;
+    font-size: 11.5px;
+    color: #8ff0a4;
+    background-color: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 10px;
+    padding: 7px 10px;
+    transition-duration: 120ms;
+}
+
+.di-ai-perm-cmd:hover {
+    background-color: rgba(0, 0, 0, 0.65);
+    border-color: rgba(53, 132, 228, 0.5);
+}
+
+.di-ai-perm-btns {
+    spacing: 8px;
+    padding-top: 2px;
+}
+
+.di-ai-perm-btn {
+    padding: 5px 14px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.08);
+    transition-duration: 140ms;
+}
+
+.di-ai-perm-btn:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.di-ai-perm-btn.allow {
+    background-color: #3584e4;
+}
+
+.di-ai-perm-btn.allow:hover {
+    background-color: #5a9cf8;
+}
+
+/* Notification peek: clock pill grows into a notification card */
+.di-notif-island {
+    border-radius: 24px;
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    padding: 0;
+}
+
+.di-notif-island-content {
+    padding: 8px 14px 8px 12px;
+    spacing: 12px;
+}
+
+.di-notif-island-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.di-notif-island-icon {
+    color: #ffffff;
+}
+
+.di-notif-island-col {
+    spacing: 1px;
+}
+
+.di-notif-island-app {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.7px;
+}
+
+.di-notif-island-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.di-notif-island-body {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.76);
+    font-weight: 400;
+}
+
+.di-notif-island-close-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.65);
+    border: none;
+    padding: 0;
+    margin-left: 2px;
+    transition-duration: 120ms;
+}
+
+.di-notif-island-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
 }
