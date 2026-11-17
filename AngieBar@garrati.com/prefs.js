@@ -257,35 +257,35 @@ export default class AngieBarPrefs extends ExtensionPreferences {
 
         // 1. Behavior & Clipboard
         const diBehaviorGroup = new Adw.PreferencesGroup({
-            title: 'Comportamento Dynamic Island',
-            description: 'Apertura, scheda predefinita e scadenza della Clipboard',
+            title: 'Dynamic Island Behavior',
+            description: 'Opening, default tab and Clipboard expiry',
         });
         pageDI.add(diBehaviorGroup);
 
         const hoverOpenRow = new Adw.SwitchRow({
-            title: 'Apri al passaggio del mouse (Hover)',
-            subtitle: 'Espande la Dynamic Island quando passi il cursore sulla pillola centrale',
+            title: 'Open on mouse hover',
+            subtitle: 'Expands the Dynamic Island when you hover the cursor over the center pill',
         });
         diBehaviorGroup.add(hoverOpenRow);
         settings.bind('di-open-on-hover', hoverOpenRow, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const pillNotifRow = new Adw.SwitchRow({
-            title: 'Notifiche nella pillola',
-            subtitle: 'La pillola si espande per mostrare le notifiche. Se disattivato, usa i banner standard di GNOME',
+            title: 'Notifications in the pill',
+            subtitle: 'The pill expands to show notifications. When disabled, uses standard GNOME banners',
         });
         diBehaviorGroup.add(pillNotifRow);
         settings.bind('di-pill-notifications', pillNotifRow, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const tabOptions = [
-            { id: 'notifications', label: 'Notifiche' },
-            { id: 'music',         label: 'Musica' },
-            { id: 'clipboard',     label: 'Clipboard & Scaffale File' },
-            { id: 'pomodoro',      label: 'Timer Pomodoro' },
-            { id: 'calendar',      label: 'Calendario' },
+            { id: 'notifications', label: 'Notifications' },
+            { id: 'music',         label: 'Music' },
+            { id: 'clipboard',     label: 'Clipboard & File Shelf' },
+            { id: 'pomodoro',      label: 'Pomodoro Timer' },
+            { id: 'calendar',      label: 'Calendar' },
             { id: 'todo',          label: 'To-Do List' },
         ];
         const defaultTabRow = new Adw.ComboRow({
-            title: 'Scheda predefinita all\'apertura',
+            title: 'Default tab on open',
             model: Gtk.StringList.new(tabOptions.map(t => t.label)),
         });
         const curDefault = settings.get_string('di-default-tab') || 'notifications';
@@ -298,8 +298,8 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         diBehaviorGroup.add(defaultTabRow);
 
         const clipTtlRow = new Adw.SpinRow({
-            title: 'Scadenza automatica Clipboard (minuti)',
-            subtitle: 'Elimina automaticamente screenshot, file e appunti non fissati (0 = mai)',
+            title: 'Clipboard auto-expiry (minutes)',
+            subtitle: 'Automatically deletes non-pinned screenshots, files and notes (0 = never)',
             adjustment: new Gtk.Adjustment({
                 lower: 0,
                 upper: 1440,
@@ -314,8 +314,8 @@ export default class AngieBarPrefs extends ExtensionPreferences {
 
         // 2. Visible Tabs
         const diTabsGroup = new Adw.PreferencesGroup({
-            title: 'Schede della Dynamic Island',
-            description: 'Scegli quali schede mostrare nella barra superiore della Dynamic Island',
+            title: 'Dynamic Island Tabs',
+            description: 'Choose which tabs to show in the Dynamic Island top bar',
         });
         pageDI.add(diTabsGroup);
 
@@ -327,17 +327,17 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         });
 
         // ============================================================
-        // PAGE 5 – Assistente AI
+        // PAGE 5 – AI Assistant
         // ============================================================
         const pageAI = new Adw.PreferencesPage({
-            title: 'Assistente AI',
+            title: 'AI Assistant',
             icon_name: 'starred-symbolic',
         });
         window.add(pageAI);
 
         const aiEngineGroup = new Adw.PreferencesGroup({
-            title: 'Motore AI',
-            description: 'Scegli quale AI usare nella pillola (clic destro sulla pallina per cambiarla al volo)',
+            title: 'AI Engine',
+            description: 'Choose which AI to use in the pill (right-click the orb to switch on the fly)',
         });
         pageAI.add(aiEngineGroup);
 
@@ -345,11 +345,11 @@ export default class AngieBarPrefs extends ExtensionPreferences {
             { id: 'agy',      label: 'AGY (Antigravity CLI)' },
             { id: 'codex',    label: 'Codex (OpenAI CLI)' },
             { id: 'claude',   label: 'Claude Code' },
-            { id: 'local',    label: 'Modello Locale (Ollama / vLLM / LM Studio)' },
-            { id: 'internal', label: 'AI interna (comandi rapidi di sistema)' },
+            { id: 'local',    label: 'Local Model (Ollama / vLLM / LM Studio)' },
+            { id: 'internal', label: 'Built-in AI (quick system commands)' },
         ];
         const providerRow = new Adw.ComboRow({
-            title: 'Usa',
+            title: 'Use',
             model: Gtk.StringList.new(providers.map(p => p.label)),
         });
         const syncProviderRow = () => {
@@ -366,24 +366,24 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         aiEngineGroup.add(providerRow);
 
         const permRow = new Adw.SwitchRow({
-            title: 'Chiedi il permesso prima di agire',
-            subtitle: 'L\'AI propone i comandi e li esegue solo dopo che premi "Consenti"',
+            title: 'Ask for permission before acting',
+            subtitle: 'The AI proposes commands and only runs them after you press "Allow"',
         });
         settings.bind('ai-ask-permission', permRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         aiEngineGroup.add(permRow);
 
         const localAiGroup = new Adw.PreferencesGroup({
-            title: 'Inferenza Locale (Ollama / vLLM / LM Studio)',
-            description: 'Configura il motore locale, il modello e la gestione della memoria',
+            title: 'Local Inference (Ollama / vLLM / LM Studio)',
+            description: 'Configure the local engine, the model and memory management',
         });
         pageAI.add(localAiGroup);
 
         const engineTypes = [
-            { id: 'ollama',            label: 'Ollama (supporta caricamento e scaricamento dinamico)' },
-            { id: 'openai-compatible', label: 'Compatibile OpenAI (vLLM, LM Studio, llama.cpp, LocalAI)' },
+            { id: 'ollama',            label: 'Ollama (supports dynamic load/unload)' },
+            { id: 'openai-compatible', label: 'OpenAI compatible (vLLM, LM Studio, llama.cpp, LocalAI)' },
         ];
         const engineRow = new Adw.ComboRow({
-            title: 'Tipo Motore',
+            title: 'Engine Type',
             model: Gtk.StringList.new(engineTypes.map(e => e.label)),
         });
         const curEngine = settings.get_string('local-ai-engine') || 'ollama';
@@ -401,28 +401,28 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         settings.bind('local-ai-endpoint', endpointRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
         const modelRow = new Adw.EntryRow({
-            title: 'Nome Modello',
+            title: 'Model Name',
         });
         localAiGroup.add(modelRow);
         settings.bind('local-ai-model', modelRow, 'text', Gio.SettingsBindFlags.DEFAULT);
 
         const unloadRow = new Adw.SwitchRow({
-            title: 'Carica alla richiesta e scarica subito dopo',
-            subtitle: 'Libera la memoria RAM e VRAM (keep_alive: 0) appena la risposta è completata',
+            title: 'Load on request and unload right after',
+            subtitle: 'Frees RAM and VRAM (keep_alive: 0) as soon as the response completes',
         });
         localAiGroup.add(unloadRow);
         settings.bind('local-ai-unload-after-use', unloadRow, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const testRow = new Adw.ActionRow({
-            title: 'Stato Connessione',
-            subtitle: 'Verifica la connessione e trova i modelli scaricati',
+            title: 'Connection Status',
+            subtitle: 'Check the connection and find downloaded models',
         });
         const detectBtn = new Gtk.Button({
-            label: 'Rileva Modelli',
+            label: 'Detect Models',
             valign: Gtk.Align.CENTER,
         });
         detectBtn.connect('clicked', () => {
-            testRow.subtitle = 'Interrogo endpoint in corso...';
+            testRow.subtitle = 'Querying endpoint...';
             const ep = (settings.get_string('local-ai-endpoint') || 'http://127.0.0.1:11434').replace(/\/+$/, '');
             try {
                 const session = new Gio.SubprocessLauncher({ flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE });
@@ -440,7 +440,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
                             } catch (e) {}
                         }
                         if (models.length > 0) {
-                            testRow.subtitle = `Connesso · ${models.length} modelli: ${models.slice(0, 4).join(', ')}`;
+                            testRow.subtitle = `Connected · ${models.length} models: ${models.slice(0, 4).join(', ')}`;
                             const curM = settings.get_string('local-ai-model');
                             if (!curM || !models.includes(curM)) {
                                 settings.set_string('local-ai-model', models[0]);
@@ -459,48 +459,48 @@ export default class AngieBarPrefs extends ExtensionPreferences {
                                         } catch (e) {}
                                     }
                                     if (v1Models.length > 0) {
-                                        testRow.subtitle = `Connesso · ${v1Models.length} modelli: ${v1Models.slice(0, 4).join(', ')}`;
+                                        testRow.subtitle = `Connected · ${v1Models.length} models: ${v1Models.slice(0, 4).join(', ')}`;
                                     } else {
-                                        testRow.subtitle = 'Motore online ma nessun modello scaricato (es. `ollama pull llama3.2`)';
+                                        testRow.subtitle = 'Engine online but no model downloaded (e.g. `ollama pull llama3.2`)';
                                     }
                                 } catch (e2) {
-                                    testRow.subtitle = 'Nessun modello trovato sull\'endpoint specificato';
+                                    testRow.subtitle = 'No model found on the specified endpoint';
                                 }
                             });
                         }
                     } catch (e) {
-                        testRow.subtitle = 'Impossibile connettersi all\'endpoint specificato';
+                        testRow.subtitle = 'Unable to connect to the specified endpoint';
                     }
                 });
             } catch (e) {
-                testRow.subtitle = `Errore di rete: ${e.message}`;
+                testRow.subtitle = `Network error: ${e.message}`;
             }
         });
         testRow.add_suffix(detectBtn);
         localAiGroup.add(testRow);
 
         const aiShortcutGroup = new Adw.PreferencesGroup({
-            title: 'Scorciatoia da tastiera',
-            description: 'Richiama la pillola AI da qualsiasi punto',
+            title: 'Keyboard Shortcut',
+            description: 'Summon the AI pill from anywhere',
         });
         pageAI.add(aiShortcutGroup);
 
         const prettyAccel = (accel) => {
-            if (!accel) return 'Disattivata';
+            if (!accel) return 'Disabled';
             try {
                 const [ok, key, mods] = Gtk.accelerator_parse(accel);
                 if (ok !== false && key) return Gtk.accelerator_get_label(key, mods);
             } catch (e) {}
             return accel;
         };
-        const shortcutRow = new Adw.ActionRow({ title: 'Apri / chiudi pillola AI' });
+        const shortcutRow = new Adw.ActionRow({ title: 'Open / close AI pill' });
         const shortcutLabel = new Gtk.ShortcutLabel({
             accelerator: (settings.get_strv('ai-shortcut')[0] || ''),
             disabled_text: 'Disattivata',
             valign: Gtk.Align.CENTER,
         });
-        const changeBtn = new Gtk.Button({ label: 'Cambia', valign: Gtk.Align.CENTER });
-        const clearBtn = new Gtk.Button({ icon_name: 'edit-clear-symbolic', valign: Gtk.Align.CENTER, has_frame: false, tooltip_text: 'Disattiva' });
+        const changeBtn = new Gtk.Button({ label: 'Change', valign: Gtk.Align.CENTER });
+        const clearBtn = new Gtk.Button({ icon_name: 'edit-clear-symbolic', valign: Gtk.Align.CENTER, has_frame: false, tooltip_text: 'Disable' });
         shortcutRow.add_suffix(shortcutLabel);
         shortcutRow.add_suffix(changeBtn);
         shortcutRow.add_suffix(clearBtn);
@@ -516,7 +516,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
                 modal: true,
                 default_width: 380,
                 default_height: 180,
-                title: 'Nuova scorciatoia',
+                title: 'New shortcut',
             });
             const box = new Gtk.Box({
                 orientation: Gtk.Orientation.VERTICAL,
@@ -524,8 +524,8 @@ export default class AngieBarPrefs extends ExtensionPreferences {
                 margin_top: 32, margin_bottom: 32, margin_start: 24, margin_end: 24,
                 valign: Gtk.Align.CENTER,
             });
-            box.append(new Gtk.Label({ label: '<b>Premi la combinazione di tasti</b>', use_markup: true }));
-            box.append(new Gtk.Label({ label: 'Esc per annullare · Backspace per disattivare', css_classes: ['dim-label'] }));
+            box.append(new Gtk.Label({ label: '<b>Press the key combination</b>', use_markup: true }));
+            box.append(new Gtk.Label({ label: 'Esc to cancel · Backspace to disable', css_classes: ['dim-label'] }));
             dlg.set_content(box);
             const ctrl = new Gtk.EventControllerKey();
             ctrl.connect('key-pressed', (_c, keyval, keycode, state) => {
@@ -552,26 +552,26 @@ export default class AngieBarPrefs extends ExtensionPreferences {
 
         // 3. Google Tasks Integration
         const googleGroup = new Adw.PreferencesGroup({
-            title: 'Google Tasks & Sincronizzazione',
-            description: 'Collega i To-Do e gli elenchi al tuo account Google tramite GNOME Online Accounts',
+            title: 'Google Tasks & Sync',
+            description: 'Link your To-Do lists to your Google account via GNOME Online Accounts',
         });
         pageDI.add(googleGroup);
 
         const googleSyncSwitch = new Adw.SwitchRow({
-            title: 'Sincronizza con Google Tasks',
-            subtitle: 'Sincronizza automaticamente elenchi (cartelle) e attività con Google Tasks',
+            title: 'Sync with Google Tasks',
+            subtitle: 'Automatically sync lists (folders) and tasks with Google Tasks',
         });
         googleGroup.add(googleSyncSwitch);
         settings.bind('di-google-tasks-enabled', googleSyncSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const accountStatusRow = new Adw.ActionRow({
-            title: 'Stato Account Google',
-            subtitle: 'Verifica in corso...',
+            title: 'Google Account Status',
+            subtitle: 'Checking...',
         });
         const openGoaBtn = new Gtk.Button({
             label: 'Account Online',
             valign: Gtk.Align.CENTER,
-            tooltip_text: 'Apri Impostazioni → Account online di GNOME',
+            tooltip_text: 'Open Settings → GNOME Online Accounts',
         });
         openGoaBtn.connect('clicked', () => {
             try {
@@ -581,7 +581,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         const syncNowBtn = new Gtk.Button({
             icon_name: 'view-refresh-symbolic',
             valign: Gtk.Align.CENTER,
-            tooltip_text: 'Sincronizza ora con Google Tasks e aggiorna gli elenchi',
+            tooltip_text: 'Sync now with Google Tasks and update the lists',
         });
         const accBtnBox = new Gtk.Box({ spacing: 6, valign: Gtk.Align.CENTER });
         accBtnBox.append(syncNowBtn);
@@ -591,8 +591,8 @@ export default class AngieBarPrefs extends ExtensionPreferences {
 
         // 4. Visibility of Todo Lists / Topics (Hide or Show lists in Dynamic Island)
         const topicsGroup = new Adw.PreferencesGroup({
-            title: 'Elenchi / Argomenti To-Do visibili',
-            description: 'Attiva o disattiva gli elenchi per mostrarli o nasconderli nella Dynamic Island',
+            title: 'Visible To-Do Lists / Topics',
+            description: 'Toggle lists on or off to show or hide them in the Dynamic Island',
         });
         pageDI.add(topicsGroup);
 
@@ -630,7 +630,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
             const data = readLocalTodosData();
             const allTopics = [...data.topics];
             data.todos.forEach(t => {
-                const tp = t.topic || 'Generale';
+                const tp = t.topic || 'General';
                 if (!allTopics.includes(tp)) allTopics.push(tp);
             });
 
@@ -639,8 +639,8 @@ export default class AngieBarPrefs extends ExtensionPreferences {
 
             if (allTopics.length === 0) {
                 const emptyRow = new Adw.ActionRow({
-                    title: 'Nessun elenco presente',
-                    subtitle: 'Crea un argomento nella Dynamic Island o sincronizza con Google Tasks',
+                    title: 'No lists yet',
+                    subtitle: 'Create a topic in the Dynamic Island or sync with Google Tasks',
                 });
                 topicsGroup.add(emptyRow);
                 topicRows.push(emptyRow);
@@ -648,11 +648,11 @@ export default class AngieBarPrefs extends ExtensionPreferences {
             }
 
             allTopics.forEach(topic => {
-                const count = data.todos.filter(t => (t.topic || 'Generale') === topic).length;
+                const count = data.todos.filter(t => (t.topic || 'General') === topic).length;
                 const isGoogle = Boolean(data.googleLists && data.googleLists[topic]);
                 const row = new Adw.SwitchRow({
                     title: topic,
-                    subtitle: `${isGoogle ? 'Google Tasks · ' : 'Locale · '}${count} attività`,
+                    subtitle: `${isGoogle ? 'Google Tasks · ' : 'Local · '}${count} tasks`,
                     active: !hiddenSet.has(topic),
                 });
                 row.connect('notify::active', () => {
@@ -697,16 +697,16 @@ export default class AngieBarPrefs extends ExtensionPreferences {
                     }
                 }
                 if (!googlePath) {
-                    accountStatusRow.subtitle = 'Nessun account Google trovato in GNOME Online Accounts';
+                    accountStatusRow.subtitle = 'No Google account found in GNOME Online Accounts';
                     rebuildTopicsRows();
                     return;
                 }
                 if (attention) {
-                    accountStatusRow.subtitle = `${email} — Riautenticazione richiesta (clicca "Account Online")`;
+                    accountStatusRow.subtitle = `${email} — Re-authentication required (click "Online Accounts")`;
                     rebuildTopicsRows();
                     return;
                 }
-                accountStatusRow.subtitle = `Collegato come ${email}`;
+                accountStatusRow.subtitle = `Logged in as ${email}`;
 
                 if (fetchLists) {
                     const tokRes = Gio.DBus.session.call_sync(
@@ -746,7 +746,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
                                         }
                                     });
                                     GLib.file_set_contents(todoFilePath, JSON.stringify(data));
-                                    accountStatusRow.subtitle = `Sincronizzato con ${email} (${parsed.items.length} elenchi)`;
+                                    accountStatusRow.subtitle = `Synced with ${email} (${parsed.items.length} lists)`;
                                 }
                             } catch (e) {}
                             rebuildTopicsRows();
@@ -755,13 +755,13 @@ export default class AngieBarPrefs extends ExtensionPreferences {
                     }
                 }
             } catch (e) {
-                accountStatusRow.subtitle = 'Impossibile interrogare GNOME Online Accounts';
+                accountStatusRow.subtitle = 'Unable to query GNOME Online Accounts';
             }
             rebuildTopicsRows();
         };
 
         syncNowBtn.connect('clicked', () => {
-            accountStatusRow.subtitle = 'Sincronizzazione in corso...';
+            accountStatusRow.subtitle = 'Syncing...';
             checkAndSyncGoogleFromPrefs(true);
             // Trigger sync in running extension by toggling or touching setting
             const curHidden = settings.get_strv('di-hidden-todo-topics') || [];
@@ -771,7 +771,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         checkAndSyncGoogleFromPrefs(true);
 
         // ============================================================
-        // PAGE 6 – Pomodoro (Studio & Pausa)
+        // PAGE 6 – Pomodoro (Focus & Break)
         // ============================================================
         const pagePomo = new Adw.PreferencesPage({
             title: 'Pomodoro',
@@ -780,14 +780,14 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         window.add(pagePomo);
 
         const pomoDurGroup = new Adw.PreferencesGroup({
-            title: 'Durata Studio e Pause',
-            description: 'Scegli un preset rapido o imposta i minuti esatti (sincronizzati con la Dynamic Island)',
+            title: 'Focus and Break Duration',
+            description: 'Choose a quick preset or set the exact minutes (synced with the Dynamic Island)',
         });
         pagePomo.add(pomoDurGroup);
 
         const presetRow = new Adw.ActionRow({
-            title: 'Preset rapidi',
-            subtitle: 'Imposta al volo durata studio, pausa breve e pausa lunga',
+            title: 'Quick presets',
+            subtitle: 'Set the focus, short break and long break durations on the fly',
         });
         const presetBox = new Gtk.Box({ spacing: 6, valign: Gtk.Align.CENTER });
         [
@@ -799,7 +799,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
             const btn = new Gtk.Button({
                 label: p.label,
                 valign: Gtk.Align.CENTER,
-                tooltip_text: `${p.work} min studio · ${p.brk} min pausa · ${p.longBrk} min pausa lunga`,
+                tooltip_text: `${p.work} min focus · ${p.brk} min break · ${p.longBrk} min long break`,
             });
             btn.connect('clicked', () => {
                 settings.set_int('pomodoro-work-mins', p.work);
@@ -812,8 +812,8 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         pomoDurGroup.add(presetRow);
 
         const pomoWorkRow = new Adw.SpinRow({
-            title: 'Durata Studio / Focus (minuti)',
-            subtitle: 'Intervallo di concentrazione (es. 25, 45, 50 min)',
+            title: 'Focus Duration (minutes)',
+            subtitle: 'Concentration interval (e.g. 25, 45, 50 min)',
             adjustment: new Gtk.Adjustment({
                 lower: 5,
                 upper: 180,
@@ -827,7 +827,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         settings.bind('pomodoro-work-mins', pomoWorkRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
         const pomoBreakRow = new Adw.SpinRow({
-            title: 'Durata Pausa Breve (minuti)',
+            title: 'Short Break Duration (minutes)',
             adjustment: new Gtk.Adjustment({
                 lower: 1,
                 upper: 60,
@@ -841,7 +841,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         settings.bind('pomodoro-break-mins', pomoBreakRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
         const pomoLongBreakRow = new Adw.SpinRow({
-            title: 'Durata Pausa Lunga (minuti)',
+            title: 'Long Break Duration (minutes)',
             adjustment: new Gtk.Adjustment({
                 lower: 5,
                 upper: 90,
@@ -855,7 +855,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         settings.bind('pomodoro-long-break-mins', pomoLongBreakRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
         const pomoCyclesRow = new Adw.SpinRow({
-            title: 'Sessioni di studio prima della Pausa Lunga',
+            title: 'Focus sessions before Long Break',
             adjustment: new Gtk.Adjustment({
                 lower: 1,
                 upper: 10,
@@ -869,37 +869,37 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         settings.bind('pomodoro-cycles-before-long', pomoCyclesRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
         const pomoAutoGroup = new Adw.PreferencesGroup({
-            title: 'Automazione e Colore nella Island',
-            description: 'Comportamento automatico al termine del timer e colore durante la pausa',
+            title: 'Timer Automation and Color in the Island',
+            description: 'Automatic behavior when the timer ends and the color used during breaks',
         });
         pagePomo.add(pomoAutoGroup);
 
         const autoBreakSwitch = new Adw.SwitchRow({
-            title: 'Entra e avvia la pausa automaticamente',
-            subtitle: 'Quando finisce il tempo di studio, passa subito in pausa e avvia il timer',
+            title: 'Automatically enter and start the break',
+            subtitle: 'When the focus time ends, switch to break and start the timer',
         });
         pomoAutoGroup.add(autoBreakSwitch);
         settings.bind('pomodoro-auto-start-break', autoBreakSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const autoFocusSwitch = new Adw.SwitchRow({
-            title: 'Avvia studio automaticamente dopo la pausa',
-            subtitle: 'Quando termina la pausa, riparte subito una nuova sessione Focus',
+            title: 'Automatically start focus after the break',
+            subtitle: 'When the break ends, a new Focus session starts right away',
         });
         pomoAutoGroup.add(autoFocusSwitch);
         settings.bind('pomodoro-auto-start-focus', autoFocusSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const breakColorSwatchesRow = new Adw.ActionRow({
-            title: 'Colore Pausa nella Island',
-            subtitle: 'Colore mostrato nella pillola e nei controlli quando sei in pausa (al posto del blu)',
+            title: 'Break Color in the Island',
+            subtitle: 'Color shown in the pill and controls while on break (instead of blue)',
         });
         const breakColorsBox = new Gtk.Box({ spacing: 8, valign: Gtk.Align.CENTER });
         [
-            { name: 'Verde Smeraldo', color: '#2ec27e' },
-            { name: 'Ambra',          color: '#f5a623' },
-            { name: 'Arancione',      color: '#ff7800' },
-            { name: 'Corallo',        color: '#f38ba8' },
-            { name: 'Viola',          color: '#cba6f7' },
-            { name: 'Turchese',       color: '#2190a4' },
+            { name: 'Emerald Green', color: '#2ec27e' },
+            { name: 'Amber',          color: '#f5a623' },
+            { name: 'Orange',          color: '#ff7800' },
+            { name: 'Coral',        color: '#f38ba8' },
+            { name: 'Purple',          color: '#cba6f7' },
+            { name: 'Turquoise',       color: '#2190a4' },
         ].forEach(c => {
             const btn = new Gtk.Button({ tooltip_text: c.name, valign: Gtk.Align.CENTER });
             const cssProvider = new Gtk.CssProvider();
@@ -923,7 +923,7 @@ export default class AngieBarPrefs extends ExtensionPreferences {
         breakColorSwatchesRow.add_suffix(breakColorsBox);
         pomoAutoGroup.add(breakColorSwatchesRow);
 
-        const breakColorEntry = new Adw.EntryRow({ title: 'Colore Pausa personalizzato (Hex)' });
+        const breakColorEntry = new Adw.EntryRow({ title: 'Custom Break Color (Hex)' });
         pomoAutoGroup.add(breakColorEntry);
         settings.bind('pomodoro-break-color', breakColorEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
     }
